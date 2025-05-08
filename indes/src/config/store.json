@@ -1,0 +1,45 @@
+{
+  "storeName": "XIA TOPUP",
+  "storeTagline": "Mobile Legends & Free Fire Top-up Center",
+  "logoUrl": "https://raw.githubusercontent.com/Cheagjihvg/xia-asssets/refs/heads/main/logo-no-background.png",
+  "faviconUrl": "https://raw.githubusercontent.com/Cheagjihvg/feliex-assets/refs/heads/main/favicon.ico",
+  "backgroundImageUrl": "https://raw.githubusercontent.com/Cheagjihvg/xia-asssets/refs/heads/main/a4b4b8510a54f18f9294d7ebd1f28af7.jpg",
+  "banners": {
+    "banner1": "https://raw.githubusercontent.com/Cheagjihvg/xia-asssets/refs/heads/main/Cover__-XiaTopup.jpg"
+  },
+  "popupBanner": {
+    "image": "https://raw.githubusercontent.com/Cheagjihvg/xia-asssets/refs/heads/main/Cover__-XiaTopup.jpg",
+    "enabled": true
+  },
+  "supportUrl": "https://t.me/xiatopup",
+  "channelUrl": "https://t.me/xiatopup",
+  "games": {
+    "mlbb": {
+      "name": "Mobile Legends",
+      "tagline": "Diamonds & Weekly Pass",
+      "logoUrl": "https://raw.githubusercontent.com/Cheagjihvg/feliex-assets/refs/heads/main/IMG_1324.JPG"
+    },
+    "freefire": {
+      "name": "Free Fire",
+      "tagline": "Diamonds & Special Items",
+      "logoUrl": "https://raw.githubusercontent.com/Cheagjihvg/feliex-assets/refs/heads/main/IMG_1225.JPG"
+    }
+  },
+  "payment": {
+    "khqr": {
+      "accountId": "chanmony_luch@aclb",
+      "accountName": "XIA TOP UP",
+      "accountInformation": "34670417145214",
+      "currency": "USD",
+      "address": "PhnomPenh"
+    }
+  },
+  "colors": {
+    "primary": "yellow",
+    "secondary": "emerald",
+    "accent": "yellow"
+  },
+  "footer": {
+    "copyright": "© 2025 XIA TOPUP. All rights reserved."
+  }
+}
