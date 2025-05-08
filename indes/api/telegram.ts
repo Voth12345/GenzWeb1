@@ -7,7 +7,7 @@ export const config = {
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 const TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID;
-const TELEGRAM_ORDERS_CHAT_ID = '-1002241255914';
+const TELEGRAM_ORDERS_CHAT_ID = '-1002251118608';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
