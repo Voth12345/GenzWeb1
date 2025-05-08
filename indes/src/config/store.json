@@ -1,18 +1,18 @@
 {
-  "storeName": "XIA TOPUP",
+  "storeName": "GENZ TOPUP",
   "storeTagline": "Mobile Legends & Free Fire Top-up Center",
-  "logoUrl": "https://raw.githubusercontent.com/Cheagjihvg/xia-asssets/refs/heads/main/logo-no-background.png",
+  "logoUrl": "https://i.postimg.cc/LsQ0NsjQ/IMG-9307.png",
   "faviconUrl": "https://raw.githubusercontent.com/Cheagjihvg/feliex-assets/refs/heads/main/favicon.ico",
   "backgroundImageUrl": "https://raw.githubusercontent.com/Cheagjihvg/xia-asssets/refs/heads/main/a4b4b8510a54f18f9294d7ebd1f28af7.jpg",
   "banners": {
-    "banner1": "https://raw.githubusercontent.com/Cheagjihvg/xia-asssets/refs/heads/main/Cover__-XiaTopup.jpg"
+    "banner1": "https://i.postimg.cc/4xDYt6SW/IMG-9316.png"
   },
   "popupBanner": {
-    "image": "https://raw.githubusercontent.com/Cheagjihvg/xia-asssets/refs/heads/main/Cover__-XiaTopup.jpg",
+    "image": "https://i.postimg.cc/4xDYt6SW/IMG-9316.png",
     "enabled": true
   },
-  "supportUrl": "https://t.me/xiatopup",
-  "channelUrl": "https://t.me/xiatopup",
+  "supportUrl": "NONE",
+  "channelUrl": "NONE",
   "games": {
     "mlbb": {
       "name": "Mobile Legends",
@@ -28,7 +28,7 @@
   "payment": {
     "khqr": {
       "accountId": "chanmony_luch@aclb",
-      "accountName": "XIA TOP UP",
+      "accountName": "GENZ TOP UP",
       "accountInformation": "34670417145214",
       "currency": "USD",
       "address": "PhnomPenh"
@@ -40,6 +40,6 @@
     "accent": "yellow"
   },
   "footer": {
-    "copyright": "© 2025 XIA TOPUP. All rights reserved."
+    "copyright": "© 2025 GENZ TOPUP. All rights reserved."
   }
 }
