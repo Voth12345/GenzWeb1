@@ -303,7 +303,7 @@ function App() {
 return (
 <div
   className="min-h-screen bg-fixed bg-cover bg-center flex flex-col relative"
-  style={{ backgroundColor: '#ffc0cb' }} // Soft pink background
+  style={{ backgroundColor: '#f9f5fc' }} // Soft pink background
 >
   {/* Bottom Sticker */}
   <img
