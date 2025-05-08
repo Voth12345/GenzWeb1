@@ -109,7 +109,7 @@ function App() {
       let data;
       let error;
       
-      const isReseller = localStorage.getItem('jackstore_reseller_auth') === 'true';
+      const isReseller = localStorage.getItem('genzstore_reseller_auth') === 'true';
       
       if (game === 'mlbb') {
         const response = await supabase
