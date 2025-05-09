@@ -431,7 +431,7 @@ return (
               "https://play-lh.googleusercontent.com/M9_okpLdBz0unRHHeX7FcZxEPLZDIQNCGEBoql7MxgSitDL4wUy4iYGQxfvqYogexQ" :
               "https://play-lh.googleusercontent.com/WWcssdzTZvx7Fc84lfMpVuyMXg83_PwrfpgSBd0IID_IuupsYVYJ34S9R2_5x57gHQ"
             } 
-           <img
+           <img></img>
     alt={form.game === 'mlbb' ? "Mobile Legends" : "Free Fire"}
     className="w-16 h-16 rounded-xl border border-gray-800/20"
           />
