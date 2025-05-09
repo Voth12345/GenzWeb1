@@ -305,12 +305,6 @@ return (
   className="min-h-screen bg-fixed bg-cover bg-center flex flex-col relative"
   style={{ backgroundColor: '#f9f5fc' }} // Soft pink background
 >
-  {/* Bottom Sticker */}
-  <img
-    src="None"
-    alt="Bottom Sticker"
-    className="absolute bottom-4 right-4 w-40 h-40 z-10" // Positioned at bottom-right
-  />
   <nav 
     className={`bg-gradient-to-r from-${storeConfig.colors.primary}-900/90 to-${storeConfig.colors.secondary}-900/90 text-white p-4 shadow-lg backdrop-blur-md sticky top-0 z-50`} 
      style={{ backgroundImage: `url("${storeConfig.backgroundImageUrl}")`, backgroundSize: 'cover', backgroundPosition: 'center' }}>
