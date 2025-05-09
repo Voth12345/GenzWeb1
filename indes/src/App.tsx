@@ -44,44 +44,38 @@ function App() {
   });
 
   const [showTopUp, setShowTopUp] = useState(false);
-  const [showPayment, setShowPayment] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
   const [orderFormat, setOrderFormat] = useState('');
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<MLBBValidationResponse | null>(null);
-  const [showCheckout, setShowCheckout] = useState(false);
   const [formErrors, setFormErrors] = useState<{userId?: string; serverId?: string}>({});
   const [products, setProducts] = useState<GameProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdminRoute, setIsAdminRoute] = useState(false);
   const [isResellerRoute, setIsResellerRoute] = useState(false);
   const [isResellerLoggedIn, setIsResellerLoggedIn] = useState(false);
-  const [showPopupBanner, setShowPopupBanner] = useState(true);
   const [paymentCooldown, setPaymentCooldown] = useState(0);
   const [cooldownInterval, setCooldownInterval] = useState<NodeJS.Timeout | null>(null);
   const [discountPercent, setDiscountPercent] = useState(0);
+  const [showPopupBanner, setShowPopupBanner] = useState(true);
 
-  // Route checking effect
+  // Route checking
   useEffect(() => {
     const checkRoute = () => {
       const path = window.location.pathname;
       setIsAdminRoute(path === '/adminlogintopup');
       setIsResellerRoute(path === '/reseller');
-      const resellerAuth = localStorage.getItem('jackstore_reseller_auth');
-      setIsResellerLoggedIn(resellerAuth === 'true');
+      setIsResellerLoggedIn(localStorage.getItem('jackstore_reseller_auth') === 'true');
     };
     checkRoute();
     window.addEventListener('popstate', checkRoute);
-    return () => {
-      window.removeEventListener('popstate', checkRoute);
-    };
+    return () => window.removeEventListener('popstate', checkRoute);
   }, []);
 
-  // Fetch products on game change
+  // Fetch products
   useEffect(() => {
-    if (!isAdminRoute && !isResellerRoute) {
-      fetchProducts(form.game);
-    }
-  }, [form.game, isAdminRoute, isResellerRoute]);
+    if (!isAdminRoute && !isResellerRoute) fetchProducts(form.game);
+  }, [form.game]);
 
   // Cleanup interval
   useEffect(() => {
@@ -132,6 +126,7 @@ function App() {
         data = response.data;
         error = response.error;
       }
+
       if (error) throw error;
 
       let transformedProducts: GameProduct[] = data.map(product => ({
@@ -227,7 +222,6 @@ function App() {
 
   const handleClosePayment = () => {
     setShowCheckout(false);
-    setShowPayment(false);
     startPaymentCooldown();
   };
 
@@ -272,7 +266,7 @@ function App() {
     <div className="min-h-screen bg-black bg-fixed bg-cover bg-center flex flex-col relative">
       {/* Header */}
       <nav
-        className={`bg-gradient-to-r from-black to-gray-800 text-white p-4 shadow-lg backdrop-blur-md sticky top-0 z-50`}
+        className="bg-gradient-to-r from-black to-gray-900 text-white p-4 shadow-lg backdrop-blur-md sticky top-0 z-50"
         style={{
           backgroundImage: `url("${storeConfig.backgroundImageUrl}")`,
           backgroundSize: 'cover',
@@ -300,14 +294,14 @@ function App() {
       {/* Main Content */}
       <main className="flex-grow container mx-auto px-4 py-8">
         {!showTopUp ? (
-          <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+          <div className="grid grid-cols-2 gap-6 max-w-lg mx-auto">
             {/* MLBB */}
             <div
               onClick={() => {
                 setForm(prev => ({ ...prev, game: 'mlbb' }));
                 setShowTopUp(true);
               }}
-              className="bg-gray-900 backdrop-blur-lg border border-gray-700 rounded-3xl p-4 text-sky-300 hover:bg-gray-800 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-sky-300"
+              className="bg-black/60 backdrop-blur-lg border border-gray-700 rounded-3xl p-5 text-sky-300 hover:bg-black transition-all duration-300 group cursor-pointer shadow-xl hover:shadow-blue-500/30"
             >
               <img
                 src={storeConfig.games.mlbb.logoUrl}
@@ -320,10 +314,10 @@ function App() {
               >
                 🎮 {storeConfig.games.mlbb.name}
               </h3>
-              <p className="text-xs text-center text-gray-300 mt-2 font-light">
+              <p className="text-xs text-center text-gray-400 mt-2 font-light">
                 ✨ {storeConfig.games.mlbb.tagline}
               </p>
-              <div className="mt-4 w-full bg-gradient-to-r from-black via-gray-800 to-black text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-xl hover:shadow-black/30 transform hover:-translate-y-1 transition-all duration-300">
+              <div className="mt-4 w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-1 transition-all duration-300">
                 💎 Top Up Now
               </div>
             </div>
@@ -333,7 +327,7 @@ function App() {
                 setForm(prev => ({ ...prev, game: 'freefire' }));
                 setShowTopUp(true);
               }}
-              className="bg-gray-900 backdrop-blur-lg border border-gray-700 rounded-3xl p-4 text-sky-300 hover:bg-gray-800 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-sky-300"
+              className="bg-black/60 backdrop-blur-lg border border-gray-700 rounded-3xl p-5 text-sky-300 hover:bg-black transition-all duration-300 group cursor-pointer shadow-xl hover:shadow-blue-500/30"
             >
               <img
                 src={storeConfig.games.freefire.logoUrl}
@@ -346,16 +340,16 @@ function App() {
               >
                 🔥 {storeConfig.games.freefire.name}
               </h3>
-              <p className="text-xs text-center text-gray-300 mt-2 font-light">
+              <p className="text-xs text-center text-gray-400 mt-2 font-light">
                 ✨ {storeConfig.games.freefire.tagline}
               </p>
-              <div className="mt-4 w-full bg-gradient-to-r from-black via-gray-800 to-black text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-xl hover:shadow-black/30 transform hover:-translate-y-1 transition-all duration-300">
+              <div className="mt-4 w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-1 transition-all duration-300">
                 💎 Top Up Now
               </div>
             </div>
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto space-y-6 bg-black rounded-xl p-6 shadow-lg">
+          <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => {
@@ -377,10 +371,10 @@ function App() {
             </div>
 
             {/* Top-Up Panel */}
-            <div className="bg-black border border-gray-800/40 rounded-xl p-6 text-white shadow-xl">
-              <div className="flex flex-col space-y-4">
+            <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 border border-white/10 rounded-2xl p-6 text-white shadow-2xl shadow-black/30">
+              <div className="flex flex-col space-y-6">
                 {/* Game Info Header */}
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 bg-white/5 p-4 rounded-xl border border-white/5 backdrop-blur-sm">
                   <img
                     src={
                       form.game === 'mlbb'
@@ -388,10 +382,10 @@ function App() {
                         : "https://play-lh.googleusercontent.com/WWcssdzTZvx7Fc84lfMpVuyMXg83_PwrfpgSBd0IID_IuupsYVYJ34S9R2_5x57gHQ "
                     }
                     alt={form.game === 'mlbb' ? "Mobile Legends" : "Free Fire"}
-                    className="w-16 h-16 rounded-xl border border-gray-800/20"
+                    className="w-16 h-16 rounded-xl border border-gray-800/30 shadow-md transition-transform duration-300 hover:scale-105"
                   />
                   <div className="flex-1">
-                    <h2 className="text-xl font-bold text-white">
+                    <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                       {form.game === 'mlbb' ? 'Mobile Legends' : 'Free Fire'}
                     </h2>
                     <div className="flex items-center gap-3 mt-2">
@@ -401,7 +395,7 @@ function App() {
                           alt="Safety Guarantee"
                           className="w-5 h-5"
                         />
-                        <span className="text-sm text-sky-300">Safety Guarantees</span>
+                        <span className="text-sm text-green-400">Safe & Secure</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <img
@@ -409,22 +403,22 @@ function App() {
                           alt="Instant Delivery"
                           className="w-5 h-5"
                         />
-                        <span className="text-sm text-sky-300">Instant Delivery</span>
+                        <span className="text-sm text-blue-400">Instant Delivery</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Form section */}
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className={`grid ${form.game === 'mlbb' ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-4`}>
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div className={`grid ${form.game === 'mlbb' ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-5`}>
                     {/* User ID */}
-                    <div>
+                    <div className="group">
                       <label className="block text-sm font-medium mb-1 text-gray-300">
                         {form.game === 'mlbb' ? 'User ID' : 'Free Fire ID'}
                       </label>
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-400 transition-colors" />
                         <input
                           type="number"
                           value={form.userId}
@@ -433,7 +427,7 @@ function App() {
                             setValidationResult(null);
                             setFormErrors(prev => ({ ...prev, userId: undefined }));
                           }}
-                          className="pl-9 w-full rounded-lg bg-black/50 border border-gray-700 px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 text-sm"
+                          className="pl-9 w-full rounded-lg bg-black/50 border border-gray-700 px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 text-sm group-hover:border-blue-500"
                           placeholder={`Enter your ${form.game === 'mlbb' ? 'User ID' : 'Free Fire ID'}`}
                         />
                         {formErrors.userId && (
@@ -444,10 +438,10 @@ function App() {
 
                     {/* Server ID */}
                     {form.game === 'mlbb' && (
-                      <div>
+                      <div className="group">
                         <label className="block text-sm font-medium mb-1 text-gray-300">Server ID</label>
                         <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-400 transition-colors" />
                           <input
                             type="number"
                             value={form.serverId}
@@ -456,7 +450,7 @@ function App() {
                               setValidationResult(null);
                               setFormErrors(prev => ({ ...prev, serverId: undefined }));
                             }}
-                            className="pl-9 w-full rounded-lg bg-black/50 border border-gray-700 px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 text-sm"
+                            className="pl-9 w-full rounded-lg bg-black/50 border border-gray-700 px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 text-sm group-hover:border-blue-500"
                             placeholder="Enter your Server ID"
                           />
                           {formErrors.serverId && (
@@ -473,12 +467,12 @@ function App() {
                           type="button"
                           onClick={validateAccount}
                           disabled={!form.userId || !form.serverId || validating}
-                          className="w-full bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm justify-center"
+                          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-indigo-600 hover:to-blue-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm shadow-md hover:shadow-blue-500/30 transform hover:-translate-y-0.5"
                         >
                           {validating ? (
                             <>
                               <Loader2 className="w-4 h-4 animate-spin" />
-                              Checking...
+                              Validating...
                             </>
                           ) : (
                             <>
@@ -488,9 +482,9 @@ function App() {
                           )}
                         </button>
                         {validationResult?.success && (
-                          <div className="flex items-center gap-2 text-green-400 text-sm">
+                          <div className="flex items-center gap-2 text-green-400 text-sm animate-pulse">
                             <CheckCircle2 className="w-4 h-4" />
-                            <span>Account found: {form.nickname}</span>
+                            <span>Found: {form.nickname}</span>
                           </div>
                         )}
                       </div>
@@ -498,12 +492,13 @@ function App() {
 
                     {/* Select Package */}
                     <div>
-                      <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-4 flex items-center gap-2">
+                        <span className="inline-block w-1 h-6 bg-gradient-to-b from-blue-400 to-purple-500 rounded"></span>
                         Select Package
                       </h3>
                       {loading ? (
                         <div className="flex justify-center items-center py-8">
-                          <Loader2 className="w-8 h-8 animate-spin text-white" />
+                          <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
                           <span className="ml-2 text-white">Loading products...</span>
                         </div>
                       ) : (
@@ -518,7 +513,7 @@ function App() {
 
                     {/* Order Summary */}
                     {form.product && (
-                      <div className="bg-sky-500/20 rounded-lg p-4 border border-sky-500/30">
+                      <div className="bg-gradient-to-r from-sky-900/30 to-blue-900/20 rounded-lg p-4 border border-sky-500/30 shadow-md shadow-sky-500/10">
                         <h4 className="text-sm font-medium mb-2 text-white">Order Summary</h4>
                         <div className="space-y-2 font-mono text-sm">
                           <div className="flex items-center gap-2">
@@ -556,11 +551,11 @@ function App() {
             </div>
 
             {/* Submit Button */}
-            <div className="sticky bottom-4 bg-black/90 backdrop-blur-md rounded-xl p-4 border border-gray-700 shadow-lg mt-8">
+            <div className="sticky bottom-4 bg-black/80 backdrop-blur-md rounded-xl p-4 border border-white/10 shadow-lg mt-8">
               <button
                 type="submit"
                 disabled={form.game === 'mlbb' && !validationResult?.success || !form.product || paymentCooldown > 0}
-                className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 px-6 rounded-lg hover:from-gray-900 hover:to-black transition-all duration-300 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-black disabled:hover:to-gray-800 hover:shadow-lg hover:shadow-black/20 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white py-3 px-6 rounded-lg hover:from-indigo-600 hover:to-blue-600 transition-all duration-300 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
                 {paymentCooldown > 0 ? (
                   <>
