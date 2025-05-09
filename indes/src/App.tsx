@@ -376,7 +376,7 @@ return (
           setForm(prev => ({ ...prev, game: 'freefire' }));
           setShowTopUp(true);
         }}
-        className="bg-pink-100/10 backdrop-blur-lg border border-pink-300/30 rounded-3xl p-4 text-pink-100 hover:bg-pink-200/10 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-pink-400/30"
+        className="bg-sky-300 backdrop-blur-lg border border-sky-300 rounded-3xl p-4 text-sky-300 hover:bg-sky-300 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-sky-300"
       >
         <img
           src={storeConfig.games.freefire.logoUrl}
@@ -384,7 +384,7 @@ return (
           className="w-20 h-20 rounded-2xl mx-auto mb-3 transform group-hover:scale-110 transition-transform"
         />
         <h3
-          className="text-xl font-bold text-pink-600 text-center tracking-wide uppercase"
+          className="text-xl font-bold text-sky-300 text-center tracking-wide uppercase"
           style={{
             fontFamily: '"Fredoka One", cursive',
           }}
@@ -451,7 +451,7 @@ return (
                   alt="Safety Guarantee"
                   className="w-5 h-5"
                 />
-                <span className="text-sm text-pink-300">Safety Guarantees</span>
+                <span className="text-sm text-sky-300">Safety Guarantees</span>
               </div>
               <div className="flex items-center gap-2">
                 <img 
@@ -459,7 +459,7 @@ return (
                   alt="Instant Delivery"
                   className="w-5 h-5"
                 />
-                <span className="text-sm text-pink-300">Instant Delivery</span>
+                <span className="text-sm text-sky-300">Instant Delivery</span>
               </div>
             </div>
           </div>
@@ -522,7 +522,7 @@ className="pl-9 w-full rounded-lg bg-pink-100/10 border border-pink-300/20 px-3 
                           type="button"
                           onClick={validateAccount}
                           disabled={!form.userId || !form.serverId || validating}
-                          className="w-full max-w-[3000px] bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm justify-center"
+                          className="w-full max-w-[3000px] bg-sky-300 text-white px-4 py-2 rounded-lg hover:bg-sky-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm justify-center"
 
                         >
                           {validating ? (
@@ -566,7 +566,7 @@ className="pl-9 w-full rounded-lg bg-pink-100/10 border border-pink-300/20 px-3 
                     </div>
 
                   {form.product && (
-                    <div className="bg-pink-100/20 rounded-lg p-4 border border-pink-300">
+                    <div className="bg-sky-300 rounded-lg p-4 border border-sky-300">
                       <h4 className="text-sm font-medium mb-2 text-white">Order Summary</h4>
                       <div className="space-y-2 font-mono text-sm">
                         <div className="flex items-center gap-2">
@@ -581,7 +581,7 @@ className="pl-9 w-full rounded-lg bg-pink-100/10 border border-pink-300/20 px-3 
                         )}
                         {form.game === 'freefire' && (
                           <div className="flex items-center gap-2">
-                            <span className="text-pink-300">SERVER ID:</span>
+                            <span className="text-sky-300">SERVER ID:</span>
                             <span className="text-white">0</span>
                           </div>
                         )}
@@ -665,7 +665,7 @@ className="w-full bg-gradient-to-r from-pink-400 to-pink-300 text-white py-3 px-
 
   {/* Facebook Button (Facebook Blue) */}
   <a 
-    href="https://www.facebook.com/profile.php?id=61555667287488" 
+    href="None" 
     target="_blank" 
     rel="noopener noreferrer"
     className="flex items-center gap-2 bg-[#1877F2]/80 hover:bg-[#166FE5]/80 px-4 py-2 rounded-full transition-all duration-300"
