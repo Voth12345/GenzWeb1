@@ -307,7 +307,7 @@ return (
 >
   {/* Bottom Sticker */}
   <img
-    src="https://raw.githubusercontent.com/Cheagjihvg/xia-asssets/refs/heads/main/6271593103857141020-removebg-preview.png"
+    src="https://i.postimg.cc/LsQ0NsjQ/IMG-9307.png"
     alt="Bottom Sticker"
     className="absolute bottom-4 right-4 w-40 h-40 z-10" // Positioned at bottom-right
   />
@@ -355,7 +355,7 @@ return (
           className="w-20 h-20 rounded-2xl mx-auto mb-3 transform group-hover:scale-110 transition-transform"
         />
         <h3
-          className="text-xl font-bold text-pink-600 text-center tracking-wide uppercase"
+          className="text-xl font-bold text-stone-950 text-center tracking-wide uppercase"
           style={{
             fontFamily: '"Fredoka One", cursive',
           }}
@@ -384,7 +384,7 @@ return (
           className="w-20 h-20 rounded-2xl mx-auto mb-3 transform group-hover:scale-110 transition-transform"
         />
         <h3
-          className="text-xl font-bold text-sky-300 text-center tracking-wide uppercase"
+          className="text-xl font-bold text-stone-950 text-center tracking-wide uppercase"
           style={{
             fontFamily: '"Fredoka One", cursive',
           }}
