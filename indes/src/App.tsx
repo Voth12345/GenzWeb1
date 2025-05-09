@@ -421,7 +421,7 @@ return (
 
     {/* Top-Up Panel */}
     <div 
-      className="bg-[#1f2138] border border-white/10 rounded-xl p-6 text-white shadow-xl" // Updated background color
+     className="bg-white border border-gray-200/10 rounded-xl p-6 text-black shadow-xl"
     >
       <div className="flex flex-col space-y-4">
         {/* Game Info Header */}
@@ -476,7 +476,7 @@ return (
                               setValidationResult(null);
                               setFormErrors(prev => ({ ...prev, userId: undefined }));
                             }}
-className="pl-9 w-full rounded-lg bg-pink-100/10 border border-pink-300/20 px-3 py-2 focus:ring-2 focus:ring-pink-500 focus:border-transparent transition-all duration-200 text-white placeholder-pink-300 text-sm"
+className="pl-9 w-full rounded-lg bg-black/10 border border-gray-800/20 px-3 py-2 focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-200 text-white placeholder-gray-300 text-sm"
                             placeholder={`Enter your ${form.game === 'mlbb' ? 'User ID' : 'Free Fire ID'}`}
                           />
                           {formErrors.userId && (
