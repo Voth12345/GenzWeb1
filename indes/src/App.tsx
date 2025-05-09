@@ -294,7 +294,7 @@ function App() {
           <div className="flex items-center gap-4">
             <img src={storeConfig.logoUrl} alt="Logo" className="w-20 h-20 rounded-full" />
             <div>
-              <h1 className="text-3xl font-black text-white tracking-tight whitespace-nowrap">
+              <h1 className="text-3xl font-black text-gray-300 tracking-tight whitespace-nowrap">
                 {storeConfig.storeName}
               </h1>
               <p className="text-xs text-white/80">{storeConfig.storeTagline}</p>
