@@ -307,7 +307,7 @@ return (
 >
   {/* Bottom Sticker */}
   <img
-    src="https://i.postimg.cc/LsQ0NsjQ/IMG-9307.png"
+    src="None"
     alt="Bottom Sticker"
     className="absolute bottom-4 right-4 w-40 h-40 z-10" // Positioned at bottom-right
   />
