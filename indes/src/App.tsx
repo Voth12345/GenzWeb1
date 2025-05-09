@@ -534,12 +534,12 @@ function App() {
                         <h4 className="text-sm font-medium mb-2 text-white">Order Summary</h4>
                         <div className="space-y-2 font-mono text-sm">
                           <div className="flex items-center gap-2">
-                            <span className="text-pink-300">ID:</span>
+                            <span className="text-sky-300">ID:</span>
                             <span className="text-white">{form.userId}</span>
                           </div>
                           {form.game === 'mlbb' && (
                             <div className="flex items-center gap-2">
-                              <span className="text-pink-300">SERVER ID:</span>
+                              <span className="text-sky-300">SERVER ID:</span>
                               <span className="text-white">{form.serverId}</span>
                             </div>
                           )}
