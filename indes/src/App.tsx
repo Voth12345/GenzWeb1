@@ -388,7 +388,7 @@ return (
         <p className="text-xs text-center text-black mt-2 font-light">
           ✨ {storeConfig.games.freefire.tagline}
         </p>
-        <div className="mt-4 w-full bg-gradient-to-r from-pink-400 via-pink-300 to-pink-400 text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-xl hover:shadow-pink-400/30 transform hover:-translate-y-1 transition-all duration-300">
+  <div className="mt-4 w-full bg-gradient-to-r from-black via-gray-800 to-black text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-xl hover:shadow-black/30 transform hover:-translate-y-1 transition-all duration-300">
           💎 Top Up Now
         </div>
       </div>
