@@ -359,7 +359,7 @@ return (
         <p className="text-xs text-center text-black mt-2 font-light">
           ✨ {storeConfig.games.mlbb.tagline}
         </p>
-        <div className="mt-4 w-full bg-gradient-to-r from-pink-400 via-pink-300 to-pink-400 text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-xl hover:shadow-pink-400/30 transform hover:-translate-y-1 transition-all duration-300">
+        <div className="mt-4 w-full bg-gradient-to-r from-black via-gray-800 to-black text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-xl hover:shadow-black/30 transform hover:-translate-y-1 transition-all duration-300">
           💎 Top Up Now
         </div>
       </div>
@@ -431,20 +431,21 @@ return (
               "https://play-lh.googleusercontent.com/M9_okpLdBz0unRHHeX7FcZxEPLZDIQNCGEBoql7MxgSitDL4wUy4iYGQxfvqYogexQ" :
               "https://play-lh.googleusercontent.com/WWcssdzTZvx7Fc84lfMpVuyMXg83_PwrfpgSBd0IID_IuupsYVYJ34S9R2_5x57gHQ"
             } 
-            alt={form.game === 'mlbb' ? "Mobile Legends" : "Free Fire"}
-            className="w-16 h-16 rounded-xl"
+           <img
+    alt={form.game === 'mlbb' ? "Mobile Legends" : "Free Fire"}
+    className="w-16 h-16 rounded-xl border border-gray-800/20"
           />
-          <div className="flex-1">
-            <h2 className="text-xl font-bold">
-              {form.game === 'mlbb' ? 'Mobile Legend' : 'Free Fire'}
-            </h2>
-            <div className="flex items-center gap-3 mt-2">
-              <div className="flex items-center gap-2">
-                <img 
-                  src="https://raw.githubusercontent.com/Cheagjihvg/feliex-assets/refs/heads/main/48_-Protected_System-_Yellow-512-removebg-preview.png"
-                  alt="Safety Guarantee"
-                  className="w-5 h-5"
-                />
+     <div className="flex-1">
+    <h2 className="text-xl font-bold text-white">
+    {form.game === 'mlbb' ? 'Mobile Legends' : 'Free Fire'}
+    </h2>
+    <div className="flex items-center gap-3 mt-2">
+    <div className="flex items-center gap-2">
+      <img
+         src="https://raw.githubusercontent.com/Cheagjihvg/feliex-assets/refs/heads/main/48_-Protected_System-_Yellow-512-removebg-preview.png"
+         alt="Safety Guarantee"
+          className="w-5 h-5"
+         />
                 <span className="text-sm text-sky-300">Safety Guarantees</span>
               </div>
               <div className="flex items-center gap-2">
@@ -580,11 +581,11 @@ className="pl-9 w-full rounded-lg bg-black/10 border border-gray-800/20 px-3 py-
                           </div>
                         )}
                         <div className="flex items-center gap-2">
-                          <span className="text-pink-300">ITEM:</span>
+                        <span className="text-black">ITEM:</span>
                           <span className="text-white">{form.product.code || form.product.diamonds || form.product.name}</span>
                         </div>
                         <div className="flex items-center gap-2">
-                          <span className="text-pink-300">PRICE:</span>
+                          <span className="text-black">PRICE:</span>
                           <span className="text-white">${form.product.price.toFixed(2)} USD</span>
                         </div>
                       </div>
@@ -595,7 +596,7 @@ className="pl-9 w-full rounded-lg bg-black/10 border border-gray-800/20 px-3 py-
                       <button
                         type="submit"
                         disabled={form.game === 'mlbb' && !validationResult?.success || !form.product || paymentCooldown > 0}
-className="w-full bg-gradient-to-r from-pink-400 to-pink-300 text-white py-3 px-6 rounded-lg hover:from-pink-500 hover:to-pink-400 transition-all duration-300 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-pink-400 disabled:hover:to-pink-300 hover:shadow-lg hover:shadow-pink-400/20 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 px-6 rounded-lg hover:from-gray-900 hover:to-black transition-all duration-300 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-black disabled:hover:to-gray-800 hover:shadow-lg hover:shadow-black/20 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
                       >
                         {paymentCooldown > 0 ? (
                           <>
