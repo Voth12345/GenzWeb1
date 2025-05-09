@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import {
   Search,
   Loader2,
@@ -20,12 +20,21 @@ import { BannerSlider } from './components/BannerSlider';
 import { PopupBanner } from './components/PopupBanner';
 import { PromoCodeInput } from './components/PromoCodeInput';
 
-const AdminPage = lazy(() =>
-  import('./pages/AdminPage').then(module => ({ default: module.AdminPage }))
-);
-const ResellerPage = lazy(() =>
-  import('./pages/ResellerPage').then(module => ({ default: module.ResellerPage }))
-);
+// Constants
+const STORAGE_KEYS = {
+  CUSTOMER_INFO: 'customerInfo',
+  RESELLER_AUTH: 'reseller_auth',
+  RESELLER_USERNAME: 'reseller_username',
+};
+
+// Environment variables
+const API_URLS = {
+  MLBB_VALIDATE: process.env.REACT_APP_MLBB_VALIDATE_API || 'https://api.isan.eu.org/nickname/ml',
+};
+
+// Lazy-loaded pages
+const AdminPage = lazy(() => import('./pages/AdminPage').then(module => ({ default: module.AdminPage })));
+const ResellerPage = lazy(() => import('./pages/ResellerPage').then(module => ({ default: module.ResellerPage })));
 
 interface MLBBValidationResponse {
   success: boolean;
@@ -34,12 +43,13 @@ interface MLBBValidationResponse {
 
 function App() {
   const [form, setForm] = useState<TopUpForm>(() => {
-    const savedForm = localStorage.getItem('customerInfo');
+    const savedForm = localStorage.getItem(STORAGE_KEYS.CUSTOMER_INFO);
     return savedForm ? JSON.parse(savedForm) : {
       userId: '',
       serverId: '',
       product: null,
-      game: 'mlbb'
+      game: 'mlbb',
+      nickname: undefined,
     };
   });
 
@@ -48,7 +58,7 @@ function App() {
   const [orderFormat, setOrderFormat] = useState('');
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<MLBBValidationResponse | null>(null);
-  const [formErrors, setFormErrors] = useState<{userId?: string; serverId?: string}>({});
+  const [formErrors, setFormErrors] = useState<{ userId?: string; serverId?: string; general?: string }>({});
   const [products, setProducts] = useState<GameProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdminRoute, setIsAdminRoute] = useState(false);
@@ -65,14 +75,11 @@ function App() {
       const path = window.location.pathname;
       setIsAdminRoute(path === '/adminlogintopup');
       setIsResellerRoute(path === '/reseller');
-      const resellerAuth = localStorage.getItem('jackstore_reseller_auth');
-      setIsResellerLoggedIn(resellerAuth === 'true');
+      setIsResellerLoggedIn(localStorage.getItem(STORAGE_KEYS.RESELLER_AUTH) === 'true');
     };
     checkRoute();
     window.addEventListener('popstate', checkRoute);
-    return () => {
-      window.removeEventListener('popstate', checkRoute);
-    };
+    return () => window.removeEventListener('popstate', checkRoute);
   }, []);
 
   // Fetch products on game change
@@ -92,16 +99,17 @@ function App() {
   // Save form to localStorage
   useEffect(() => {
     if (form.userId || form.serverId) {
-      localStorage.setItem('customerInfo', JSON.stringify({
+      localStorage.setItem(STORAGE_KEYS.CUSTOMER_INFO, JSON.stringify({
         userId: form.userId,
         serverId: form.serverId,
         game: form.game,
-        product: null
+        product: null,
+        nickname: form.nickname,
       }));
     }
-  }, [form.userId, form.serverId, form.game]);
+  }, [form.userId, form.serverId, form.game, form.nickname]);
 
-  const startPaymentCooldown = () => {
+  const startPaymentCooldown = useCallback(() => {
     setPaymentCooldown(7);
     if (cooldownInterval) clearInterval(cooldownInterval);
     const interval = setInterval(() => {
@@ -114,25 +122,15 @@ function App() {
       });
     }, 1000);
     setCooldownInterval(interval);
-  };
+  }, [cooldownInterval]);
 
-  const fetchProducts = async (game: 'mlbb' | 'freefire') => {
+  const fetchProducts = useCallback(async (game: 'mlbb' | 'freefire') => {
     setLoading(true);
     try {
-      let data;
-      let error;
-      const isReseller = localStorage.getItem('genzstore_reseller_auth') === 'true';
-      if (game === 'mlbb') {
-        const response = await supabase.from('mlbb_products').select('*').order('id', { ascending: true });
-        data = response.data;
-        error = response.error;
-      } else {
-        const response = await supabase.from('freefire_products').select('*').order('id', { ascending: true });
-        data = response.data;
-        error = response.error;
-      }
+      const tableName = game === 'mlbb' ? 'mlbb_products' : 'freefire_products';
+      const { data, error } = await supabase.from(tableName).select('*').order('id', { ascending: true });
 
-      if (error) throw error;
+      if (error) throw new Error(error.message);
 
       let transformedProducts: GameProduct[] = data.map(product => ({
         id: product.id,
@@ -141,25 +139,22 @@ function App() {
         price: product.price,
         currency: product.currency,
         type: product.type as 'diamonds' | 'subscription' | 'special',
-        game: game,
+        game,
         image: product.image || undefined,
-        code: product.code || undefined
+        code: product.code || undefined,
       }));
 
+      const isReseller = localStorage.getItem(STORAGE_KEYS.RESELLER_AUTH) === 'true';
       if (isReseller) {
-        const resellerPricesResponse = await supabase.from('reseller_prices').select('*').eq('game', game);
-        if (!resellerPricesResponse.error && resellerPricesResponse.data) {
-          const resellerPrices = resellerPricesResponse.data;
+        const { data: resellerPrices, error: resellerError } = await supabase
+          .from('reseller_prices')
+          .select('*')
+          .eq('game', game);
+        if (resellerError) throw new Error(resellerError.message);
+        if (resellerPrices) {
           transformedProducts = transformedProducts.map(product => {
-            const resellerPrice = resellerPrices.find(rp => rp.product_id === product.id && rp.game === product.game);
-            if (resellerPrice) {
-              return {
-                ...product,
-                price: resellerPrice.price,
-                resellerPrice: resellerPrice.price
-              };
-            }
-            return product;
+            const resellerPrice = resellerPrices.find(rp => rp.product_id === product.id && rp.game === game);
+            return resellerPrice ? { ...product, price: resellerPrice.price, resellerPrice: resellerPrice.price } : product;
           });
         }
       }
@@ -167,48 +162,61 @@ function App() {
       setProducts(transformedProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
+      setFormErrors(prev => ({ ...prev, general: 'Failed to load products. Please try again.' }));
       setProducts([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const validateAccount = async () => {
+  const validateAccount = useCallback(async () => {
     if (!form.userId || !form.serverId || form.game !== 'mlbb') return;
+
+    const idRegex = /^\d+$/;
+    if (!idRegex.test(form.userId) || !idRegex.test(form.serverId)) {
+      setFormErrors({ userId: 'User ID and Server ID must be numeric' });
+      return;
+    }
+
     setValidating(true);
     setValidationResult(null);
+    setFormErrors({});
     try {
       const response = await axios.get<MLBBValidationResponse>(
-        `https://api.isan.eu.org/nickname/ml?id= ${form.userId}&zone=${form.serverId}`
+        `${API_URLS.MLBB_VALIDATE}?id=${form.userId}&zone=${form.serverId}`
       );
       if (response.data.success) {
         setValidationResult(response.data);
         setForm(prev => ({ ...prev, nickname: response.data.name }));
       } else {
-        setValidationResult(null);
+        setFormErrors({ general: 'Account not found. Please check your User ID and Server ID.' });
       }
     } catch (error) {
       console.error('Failed to validate account:', error);
-      setValidationResult(null);
+      setFormErrors({ general: 'Failed to validate account. Please try again.' });
     } finally {
       setValidating(false);
     }
-  };
+  }, [form.userId, form.serverId, form.game]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault();
     if (paymentCooldown > 0) return;
 
-    const errors: { userId?: string; serverId?: string } = {};
+    const errors: { userId?: string; serverId?: string; general?: string } = {};
+    const idRegex = /^\d+$/;
     if (!form.userId) errors.userId = 'User ID is required';
+    else if (!idRegex.test(form.userId)) errors.userId = 'User ID must be numeric';
     if (form.game === 'mlbb' && !form.serverId) errors.serverId = 'Server ID is required';
-    if (!form.product) return alert('Please select a product');
+    else if (form.game === 'mlbb' && !idRegex.test(form.serverId)) errors.serverId = 'Server ID must be numeric';
+    if (!form.product) errors.general = 'Please select a product';
 
     setFormErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
     if (form.game === 'mlbb' && !validationResult?.success) {
-      return alert('Please check your Mobile Legends account first');
+      setFormErrors({ general: 'Please validate your Mobile Legends account first' });
+      return;
     }
 
     const productIdentifier = form.product.code || form.product.diamonds || form.product.name;
@@ -217,26 +225,27 @@ function App() {
       : `${form.userId} 0 ${productIdentifier}`;
     setOrderFormat(format);
     setShowCheckout(true);
-  };
+  }, [form, paymentCooldown, validationResult]);
 
-  const clearSavedInfo = () => {
-    localStorage.removeItem('customerInfo');
-    setForm({ userId: '', serverId: '', product: null, game: form.game });
+  const clearSavedInfo = useCallback(() => {
+    localStorage.removeItem(STORAGE_KEYS.CUSTOMER_INFO);
+    setForm({ userId: '', serverId: '', product: null, game: form.game, nickname: undefined });
     setValidationResult(null);
-  };
+    setFormErrors({});
+  }, [form.game]);
 
-  const handleClosePayment = () => {
+  const handleClosePayment = useCallback(() => {
     setShowCheckout(false);
     startPaymentCooldown();
-  };
+  }, [startPaymentCooldown]);
 
-  const handlePromoCode = (discount: number) => {
+  const handlePromoCode = useCallback((discount: number) => {
     setDiscountPercent(discount);
-  };
+  }, []);
 
-  const clearPromoCode = () => {
+  const clearPromoCode = useCallback(() => {
     setDiscountPercent(0);
-  };
+  }, []);
 
   if (isAdminRoute) {
     return (
@@ -278,12 +287,12 @@ function App() {
         style={{
           backgroundImage: `url("${storeConfig.backgroundImageUrl}")`,
           backgroundSize: 'cover',
-          backgroundPosition: 'center'
+          backgroundPosition: 'center',
         }}
       >
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src={storeConfig.logoUrl} alt="Logo" className="w-20 h-20 rounded-full" />
+            <img src={storeConfig.logoUrl} alt={`${storeConfig.storeName} Logo`} className="w-20 h-20 rounded-full" />
             <div>
               <h1 className="text-3xl font-black text-gray-300 tracking-tight whitespace-nowrap">
                 {storeConfig.storeName}
@@ -301,6 +310,11 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-grow container mx-auto px-4 py-8">
+        {formErrors.general && (
+          <div className="bg-red-500/20 text-red-400 p-4 rounded-lg mb-4 text-sm">
+            {formErrors.general}
+          </div>
+        )}
         {!showTopUp ? (
           <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
             {/* MLBB */}
@@ -310,6 +324,8 @@ function App() {
                 setShowTopUp(true);
               }}
               className="bg-gray-350 backdrop-blur-lg border border-stone-950 rounded-3xl p-4 text-sky-300 hover:bg-sky-50 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-sky-300"
+              role="button"
+              aria-label="Select Mobile Legends"
             >
               <img
                 src={storeConfig.games.mlbb.logoUrl}
@@ -337,6 +353,8 @@ function App() {
                 setShowTopUp(true);
               }}
               className="bg-gray-350 backdrop-blur-lg border border-stone-950 rounded-3xl p-4 text-sky-300 hover:bg-sky-50 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-sky-300"
+              role="button"
+              aria-label="Select Free Fire"
             >
               <img
                 src={storeConfig.games.freefire.logoUrl}
@@ -366,6 +384,7 @@ function App() {
                   setShowCheckout(false);
                 }}
                 className="text-white hover:text-green-200 transition-colors text-sm flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg"
+                aria-label="Back to game selection"
               >
                 <ArrowLeft className="w-4 h-4" /> Back to Games
               </button>
@@ -373,6 +392,7 @@ function App() {
                 <button
                   onClick={clearSavedInfo}
                   className="text-red-300 hover:text-red-200 transition-colors text-sm flex items-center gap-2 bg-red-500/10 px-3 py-1.5 rounded-lg"
+                  aria-label="Clear saved information"
                 >
                   <XCircle className="w-4 h-4" /> Clear Saved Info
                 </button>
@@ -385,12 +405,8 @@ function App() {
                 {/* Game Info Header */}
                 <div className="flex items-start gap-4">
                   <img
-                    src={
-                      form.game === 'mlbb'
-                        ? "https://play-lh.googleusercontent.com/M9_okpLdBz0unRHHeX7FcZxEPLZDIQNCGEBoql7MxgSitDL4wUy4iYGQxfvqYogexQ "
-                        : "https://play-lh.googleusercontent.com/WWcssdzTZvx7Fc84lfMpVuyMXg83_PwrfpgSBd0IID_IuupsYVYJ34S9R2_5x57gHQ "
-                    }
-                    alt={form.game === 'mlbb' ? "Mobile Legends" : "Free Fire"}
+                    src={form.game === 'mlbb' ? storeConfig.games.mlbb.logoUrl : storeConfig.games.freefire.logoUrl}
+                    alt={form.game === 'mlbb' ? 'Mobile Legends' : 'Free Fire'}
                     className="w-16 h-16 rounded-xl border border-gray-800/20"
                   />
                   <div className="flex-1">
@@ -400,7 +416,7 @@ function App() {
                     <div className="flex items-center gap-3 mt-2">
                       <div className="flex items-center gap-2">
                         <img
-                          src="https://raw.githubusercontent.com/Cheagjihvg/feliex-assets/main/48_-Protected_System-_Yellow-512-removebg-preview.png "
+                          src={storeConfig.icons.safety}
                           alt="Safety Guarantee"
                           className="w-5 h-5"
                         />
@@ -408,7 +424,7 @@ function App() {
                       </div>
                       <div className="flex items-center gap-2">
                         <img
-                          src="https://raw.githubusercontent.com/Cheagjihvg/feliex-assets/main/IMG_1820.PNG "
+                          src={storeConfig.icons.delivery}
                           alt="Instant Delivery"
                           className="w-5 h-5"
                         />
@@ -423,13 +439,14 @@ function App() {
                   <div className={`grid ${form.game === 'mlbb' ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-4`}>
                     {/* User ID */}
                     <div>
-                      <label className="block text-sm font-medium mb-1 text-gray-300">
+                      <label htmlFor="userId" className="block text-sm font-medium mb-1 text-gray-300">
                         {form.game === 'mlbb' ? 'User ID' : 'Free Fire ID'}
                       </label>
                       <div className="relative">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input
-                          type="number"
+                          id="userId"
+                          type="text"
                           value={form.userId}
                           onChange={(e) => {
                             setForm(prev => ({ ...prev, userId: e.target.value, nickname: undefined }));
@@ -438,9 +455,10 @@ function App() {
                           }}
                           className="pl-9 w-full rounded-lg bg-black/50 border border-gray-700 px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 text-sm"
                           placeholder={`Enter your ${form.game === 'mlbb' ? 'User ID' : 'Free Fire ID'}`}
+                          aria-describedby={formErrors.userId ? 'userId-error' : undefined}
                         />
                         {formErrors.userId && (
-                          <p className="text-red-400 text-xs mt-1">{formErrors.userId}</p>
+                          <p id="userId-error" className="text-red-400 text-xs mt-1">{formErrors.userId}</p>
                         )}
                       </div>
                     </div>
@@ -448,11 +466,12 @@ function App() {
                     {/* Server ID */}
                     {form.game === 'mlbb' && (
                       <div>
-                        <label className="block text-sm font-medium mb-1 text-gray-300">Server ID</label>
+                        <label htmlFor="serverId" className="block text-sm font-medium mb-1 text-gray-300">Server ID</label>
                         <div className="relative">
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                           <input
-                            type="number"
+                            id="serverId"
+                            type="text"
                             value={form.serverId}
                             onChange={(e) => {
                               setForm(prev => ({ ...prev, serverId: e.target.value, nickname: undefined }));
@@ -461,9 +480,10 @@ function App() {
                             }}
                             className="pl-9 w-full rounded-lg bg-black/50 border border-gray-700 px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 text-sm"
                             placeholder="Enter your Server ID"
+                            aria-describedby={formErrors.serverId ? 'serverId-error' : undefined}
                           />
                           {formErrors.serverId && (
-                            <p className="text-red-400 text-xs mt-1">{formErrors.serverId}</p>
+                            <p id="serverId-error" className="text-red-400 text-xs mt-1">{formErrors.serverId}</p>
                           )}
                         </div>
                       </div>
@@ -477,6 +497,7 @@ function App() {
                           onClick={validateAccount}
                           disabled={!form.userId || !form.serverId || validating}
                           className="w-full bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm justify-center"
+                          aria-label="Validate Mobile Legends account"
                         >
                           {validating ? (
                             <>
@@ -528,18 +549,10 @@ function App() {
                             <span className="text-sky-300">ID:</span>
                             <span className="text-white">{form.userId}</span>
                           </div>
-                          {form.game === 'mlbb' && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sky-300">SERVER ID:</span>
-                              <span className="text-white">{form.serverId}</span>
-                            </div>
-                          )}
-                          {form.game === 'freefire' && (
-                            <div className="flex items-center gap-2">
-                              <span className="text-sky-300">SERVER ID:</span>
-                              <span className="text-white">0</span>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <span className="text-sky-300">SERVER ID:</span>
+                            <span className="text-white">{form.game === 'mlbb' ? form.serverId : '0'}</span>
+                          </div>
                           <div className="flex items-center gap-2">
                             <span className="text-sky-300">ITEM:</span>
                             <span className="text-white">
@@ -562,8 +575,10 @@ function App() {
             <div className="sticky bottom-4 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 shadow-lg mt-8">
               <button
                 type="submit"
+                onClick={handleSubmit}
                 disabled={form.game === 'mlbb' && !validationResult?.success || !form.product || paymentCooldown > 0}
                 className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 px-6 rounded-lg hover:from-gray-900 hover:to-black transition-all duration-300 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-black disabled:hover:to-gray-800 hover:shadow-lg hover:shadow-black/20 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                aria-label="Continue to payment"
               >
                 {paymentCooldown > 0 ? (
                   <>
@@ -587,11 +602,12 @@ function App() {
               {isResellerLoggedIn && (
                 <button
                   onClick={() => {
-                    localStorage.removeItem('jackstore_reseller_auth');
-                    localStorage.removeItem('jackstore_reseller_username');
+                    localStorage.removeItem(STORAGE_KEYS.RESELLER_AUTH);
+                    localStorage.removeItem(STORAGE_KEYS.RESELLER_USERNAME);
                     window.location.reload();
                   }}
                   className="flex items-center gap-2 bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded-full transition-all duration-300"
+                  aria-label="Logout from reseller mode"
                 >
                   <LogOut className="w-4 h-4" /> Logout
                 </button>
@@ -601,6 +617,7 @@ function App() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-yellow-500/80 hover:bg-yellow-600/80 px-4 py-2 rounded-full transition-all duration-300"
+                aria-label="Contact support"
               >
                 <MessageCircle className="w-4 h-4" /> Support
               </a>
@@ -609,47 +626,49 @@ function App() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-[#0088CC]/80 hover:bg-[#0077B5]/80 px-4 py-2 rounded-full transition-all duration-300"
+                aria-label="Visit our channel"
               >
                 <svg viewBox="0 0 496 512" className="w-5 h-5 fill-current text-white">
                   <path d="M248 8C111 8 0 119 0 256S111 504 248 504 496 393 496 256 385 8 248 8zM363 176.7c-3.7 39.2-19.9 134.4-28.1 178.3-3.5 18.6-10.3 24.8-16.9 25.4-14.4 1.3-25.3-9.5-39.3-18.7-21.8-14.3-34.2-23.2-55.3-37.2-24.5-16.1-8.6-25 5.3-39.5 3.7-3.8 67.1-61.5 68.3-66.7 .2-.7 .3-3.1-1.2-4.4s-3.6-.8-5.1-.5q-3.3 .7-104.6 69.1-14.8 10.2-26.9 9.9c-8.9-.2-25.9-5-38.6-9.1-15.5-5-27.9-7.7-26.8-16.3q.8-6.7 18.5-13.7 108.4-47.2 144.6-62.3c68.9-28.6 83.2-33.6 92.5-33.8 2.1 0 6.6 .5 9.6 2.9a10.5 10.5 0 013.5 6.7A43.8 43.8 0 01363 176.7z" />
-                        </svg>
-                        <span className="text-sm font-medium">Channel</span>
-                      </a>
-                      {storeConfig.footer.facebookLink && (
-                        <a
-                          href={storeConfig.footer.facebookLink}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 bg-[#1877F2]/80 hover:bg-[#166FE5]/80 px-4 py-2 rounded-full transition-all duration-300"
-                        >
-                          <Facebook className="w-4 h-4" /> Facebook
-                        </a>
-                      )}
-                    </div>
-                    <div className="text-center text-white/60 text-sm">
-                      <p>{storeConfig.footer.copyright}</p>
-                    </div>
-                  </div>
-                </div>
-              </footer>
-
-              {/* Modals */}
-              {showCheckout && (
-                <PaymentModal
-                  form={form}
-                  orderFormat={orderFormat}
-                  onClose={handleClosePayment}
-                  discountPercent={discountPercent}
-                />
-              )}
-              {storeConfig.popupBanner.enabled && showPopupBanner && (
-                <PopupBanner
-                  image={storeConfig.popupBanner.image}
-                  onClose={() => setShowPopupBanner(false)}
-                />
+                </svg>
+                <span className="text-sm font-medium">Channel</span>
+              </a>
+              {storeConfig.footer.facebookLink && (
+                <a
+                  href={storeConfig.footer.facebookLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 bg-[#1877F2]/80 hover:bg-[#166FE5]/80 px-4 py-2 rounded-full transition-all duration-300"
+                  aria-label="Visit our Facebook page"
+                >
+                  <Facebook className="w-4 h-4" /> Facebook
+                </a>
               )}
             </div>
-          );
-        }
+            <div className="text-center text-white/60 text-sm">
+              <p>{storeConfig.footer.copyright}</p>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* Modals */}
+      {showCheckout && (
+        <PaymentModal
+          form={form}
+          orderFormat={orderFormat}
+          onClose={handleClosePayment}
+          discountPercent={discountPercent}
+        />
+      )}
+      {storeConfig.popupBanner.enabled && showPopupBanner && (
+        <PopupBanner
+          image={storeConfig.popupBanner.image}
+          onClose={() => setShowPopupBanner(false)}
+        />
+      )}
+    </div>
+  );
+}
 
 export default App;
