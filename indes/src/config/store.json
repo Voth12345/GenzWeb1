@@ -3,7 +3,7 @@
   "storeTagline": "Mobile Legends & Free Fire Top-up Center",
   "logoUrl": "https://i.postimg.cc/LsQ0NsjQ/IMG-9307.png",
   "faviconUrl": "https://raw.githubusercontent.com/Cheagjihvg/feliex-assets/refs/heads/main/favicon.ico",
-  "backgroundImageUrl": "https://raw.githubusercontent.com/Cheagjihvg/xia-asssets/refs/heads/main/a4b4b8510a54f18f9294d7ebd1f28af7.jpg",
+  "backgroundImage": "#03a9fc",
   "banners": {
     "banner1": "https://i.postimg.cc/4xDYt6SW/IMG-9316.png"
   },
