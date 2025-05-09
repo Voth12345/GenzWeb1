@@ -389,7 +389,7 @@ function App() {
             </div>
 
             {/* Top-Up Panel */}
-            <div className="bg-white border border-gray-200/10 rounded-xl p-6 text-black shadow-xl">
+            <div className="bg-gray-300 border border-gray-200/10 rounded-xl p-6 text-black shadow-xl">
               <div className="flex flex-col space-y-4">
                 {/* Game Info Header */}
                 <div className="flex items-start gap-4">
@@ -468,7 +468,7 @@ function App() {
                               setValidationResult(null);
                               setFormErrors(prev => ({ ...prev, serverId: undefined }));
                             }}
-                            className="pl-9 w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-300 text-sm"
+                            className="pl-9 w-full rounded-lg bg-white border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-300 text-sm"
                             placeholder="Enter your Server ID"
                           />
                           {formErrors.serverId && (
