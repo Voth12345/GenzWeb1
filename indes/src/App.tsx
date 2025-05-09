@@ -468,7 +468,7 @@ function App() {
                               setValidationResult(null);
                               setFormErrors(prev => ({ ...prev, serverId: undefined }));
                             }}
-                            className="pl-9 w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-white placeholder-pink-300 text-sm"
+                            className="pl-9 w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-300 text-sm"
                             placeholder="Enter your Server ID"
                           />
                           {formErrors.serverId && (
