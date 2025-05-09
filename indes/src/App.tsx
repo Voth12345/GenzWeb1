@@ -347,7 +347,7 @@ return (
           setForm(prev => ({ ...prev, game: 'mlbb' }));
           setShowTopUp(true);
         }}
-        className="bg-gray-50 backdrop-blur-lg border border-pink-300/30 rounded-3xl p-4 text-pink-100 hover:bg-pink-200/10 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-pink-400/30"
+        className="bg-gray-50 backdrop-blur-lg border border-stone-950 rounded-3xl p-4 text-sky-300 hover:bg-sky-50 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-sky-300"
       >
         <img
           src={storeConfig.games.mlbb.logoUrl}
@@ -376,7 +376,7 @@ return (
           setForm(prev => ({ ...prev, game: 'freefire' }));
           setShowTopUp(true);
         }}
-        className="bg-gray-50 backdrop-blur-lg border border-sky-300 rounded-3xl p-4 text-sky-300 hover:bg-sky-300 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-sky-300"
+        className="bg-gray-50 backdrop-blur-lg border border-stone-950 rounded-3xl p-4 text-sky-300 hover:bg-sky-50 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-sky-300"
       >
         <img
           src={storeConfig.games.freefire.logoUrl}
