@@ -59,23 +59,28 @@ function App() {
   const [discountPercent, setDiscountPercent] = useState(0);
   const [showPopupBanner, setShowPopupBanner] = useState(true);
 
-  // Route checking
+  // Route checking effect
   useEffect(() => {
     const checkRoute = () => {
       const path = window.location.pathname;
       setIsAdminRoute(path === '/adminlogintopup');
       setIsResellerRoute(path === '/reseller');
-      setIsResellerLoggedIn(localStorage.getItem('jackstore_reseller_auth') === 'true');
+      const resellerAuth = localStorage.getItem('jackstore_reseller_auth');
+      setIsResellerLoggedIn(resellerAuth === 'true');
     };
     checkRoute();
     window.addEventListener('popstate', checkRoute);
-    return () => window.removeEventListener('popstate', checkRoute);
+    return () => {
+      window.removeEventListener('popstate', checkRoute);
+    };
   }, []);
 
-  // Fetch products
+  // Fetch products on game change
   useEffect(() => {
-    if (!isAdminRoute && !isResellerRoute) fetchProducts(form.game);
-  }, [form.game]);
+    if (!isAdminRoute && !isResellerRoute) {
+      fetchProducts(form.game);
+    }
+  }, [form.game, isAdminRoute, isResellerRoute]);
 
   // Cleanup interval
   useEffect(() => {
@@ -236,9 +241,9 @@ function App() {
   if (isAdminRoute) {
     return (
       <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
           <Loader2 className="w-10 h-10 animate-spin text-green-500" />
-          <span className="ml-2 text-gray-300">Loading admin panel...</span>
+          <span className="ml-2 text-gray-700">Loading admin panel...</span>
         </div>
       }>
         <AdminPage />
@@ -249,9 +254,9 @@ function App() {
   if (isResellerRoute) {
     return (
       <Suspense fallback={
-        <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
           <Loader2 className="w-10 h-10 animate-spin text-green-500" />
-          <span className="ml-2 text-gray-300">Loading reseller panel...</span>
+          <span className="ml-2 text-gray-700">Loading reseller panel...</span>
         </div>
       }>
         <ResellerPage onLogin={() => {
@@ -263,10 +268,13 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-black bg-fixed bg-cover bg-center flex flex-col relative">
+    <div
+      className="min-h-screen bg-fixed bg-cover bg-center flex flex-col relative"
+      style={{ backgroundColor: '#f9f5fc' }}
+    >
       {/* Header */}
       <nav
-        className="bg-gradient-to-r from-black to-gray-900 text-white p-4 shadow-lg backdrop-blur-md sticky top-0 z-50"
+        className="bg-gradient-to-r from-black to-gray-800 text-white p-4 shadow-lg backdrop-blur-md sticky top-0 z-50"
         style={{
           backgroundImage: `url("${storeConfig.backgroundImageUrl}")`,
           backgroundSize: 'cover',
@@ -294,14 +302,14 @@ function App() {
       {/* Main Content */}
       <main className="flex-grow container mx-auto px-4 py-8">
         {!showTopUp ? (
-          <div className="grid grid-cols-2 gap-6 max-w-lg mx-auto">
+          <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
             {/* MLBB */}
             <div
               onClick={() => {
                 setForm(prev => ({ ...prev, game: 'mlbb' }));
                 setShowTopUp(true);
               }}
-              className="bg-black/60 backdrop-blur-lg border border-gray-700 rounded-3xl p-5 text-sky-300 hover:bg-black transition-all duration-300 group cursor-pointer shadow-xl hover:shadow-blue-500/30"
+              className="bg-gray-350 backdrop-blur-lg border border-stone-950 rounded-3xl p-4 text-sky-300 hover:bg-sky-50 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-sky-300"
             >
               <img
                 src={storeConfig.games.mlbb.logoUrl}
@@ -309,25 +317,26 @@ function App() {
                 className="w-20 h-20 rounded-2xl mx-auto mb-3 transform group-hover:scale-110 transition-transform"
               />
               <h3
-                className="text-xl font-bold text-white text-center tracking-wide uppercase"
+                className="text-xl font-bold text-stone-950 text-center tracking-wide uppercase"
                 style={{ fontFamily: '"Fredoka One", cursive' }}
               >
                 🎮 {storeConfig.games.mlbb.name}
               </h3>
-              <p className="text-xs text-center text-gray-400 mt-2 font-light">
+              <p className="text-xs text-center text-black mt-2 font-light">
                 ✨ {storeConfig.games.mlbb.tagline}
               </p>
-              <div className="mt-4 w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-1 transition-all duration-300">
+              <div className="mt-4 w-full bg-gradient-to-r from-black via-gray-800 to-black text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-xl hover:shadow-black/30 transform hover:-translate-y-1 transition-all duration-300">
                 💎 Top Up Now
               </div>
             </div>
+
             {/* Free Fire */}
             <div
               onClick={() => {
                 setForm(prev => ({ ...prev, game: 'freefire' }));
                 setShowTopUp(true);
               }}
-              className="bg-black/60 backdrop-blur-lg border border-gray-700 rounded-3xl p-5 text-sky-300 hover:bg-black transition-all duration-300 group cursor-pointer shadow-xl hover:shadow-blue-500/30"
+              className="bg-gray-350 backdrop-blur-lg border border-stone-950 rounded-3xl p-4 text-sky-300 hover:bg-sky-50 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-sky-300"
             >
               <img
                 src={storeConfig.games.freefire.logoUrl}
@@ -335,15 +344,15 @@ function App() {
                 className="w-20 h-20 rounded-2xl mx-auto mb-3 transform group-hover:scale-110 transition-transform"
               />
               <h3
-                className="text-xl font-bold text-white text-center tracking-wide uppercase"
+                className="text-xl font-bold text-stone-950 text-center tracking-wide uppercase"
                 style={{ fontFamily: '"Fredoka One", cursive' }}
               >
                 🔥 {storeConfig.games.freefire.name}
               </h3>
-              <p className="text-xs text-center text-gray-400 mt-2 font-light">
+              <p className="text-xs text-center text-black mt-2 font-light">
                 ✨ {storeConfig.games.freefire.tagline}
               </p>
-              <div className="mt-4 w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-1 transition-all duration-300">
+              <div className="mt-4 w-full bg-gradient-to-r from-black via-gray-800 to-black text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-xl hover:shadow-black/30 transform hover:-translate-y-1 transition-all duration-300">
                 💎 Top Up Now
               </div>
             </div>
@@ -371,10 +380,10 @@ function App() {
             </div>
 
             {/* Top-Up Panel */}
-            <div className="bg-gradient-to-br from-gray-900 via-black to-gray-800 border border-white/10 rounded-2xl p-6 text-white shadow-2xl shadow-black/30">
-              <div className="flex flex-col space-y-6">
+            <div className="bg-black border border-gray-800/40 rounded-xl p-6 text-white shadow-xl">
+              <div className="flex flex-col space-y-4">
                 {/* Game Info Header */}
-                <div className="flex items-start gap-4 bg-white/5 p-4 rounded-xl border border-white/5 backdrop-blur-sm">
+                <div className="flex items-start gap-4">
                   <img
                     src={
                       form.game === 'mlbb'
@@ -382,10 +391,10 @@ function App() {
                         : "https://play-lh.googleusercontent.com/WWcssdzTZvx7Fc84lfMpVuyMXg83_PwrfpgSBd0IID_IuupsYVYJ34S9R2_5x57gHQ "
                     }
                     alt={form.game === 'mlbb' ? "Mobile Legends" : "Free Fire"}
-                    className="w-16 h-16 rounded-xl border border-gray-800/30 shadow-md transition-transform duration-300 hover:scale-105"
+                    className="w-16 h-16 rounded-xl border border-gray-800/20"
                   />
                   <div className="flex-1">
-                    <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                    <h2 className="text-xl font-bold text-white">
                       {form.game === 'mlbb' ? 'Mobile Legends' : 'Free Fire'}
                     </h2>
                     <div className="flex items-center gap-3 mt-2">
@@ -395,7 +404,7 @@ function App() {
                           alt="Safety Guarantee"
                           className="w-5 h-5"
                         />
-                        <span className="text-sm text-green-400">Safe & Secure</span>
+                        <span className="text-sm text-sky-300">Safety Guarantees</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <img
@@ -403,22 +412,22 @@ function App() {
                           alt="Instant Delivery"
                           className="w-5 h-5"
                         />
-                        <span className="text-sm text-blue-400">Instant Delivery</span>
+                        <span className="text-sm text-sky-300">Instant Delivery</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Form section */}
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div className={`grid ${form.game === 'mlbb' ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-5`}>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className={`grid ${form.game === 'mlbb' ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-4`}>
                     {/* User ID */}
-                    <div className="group">
+                    <div>
                       <label className="block text-sm font-medium mb-1 text-gray-300">
                         {form.game === 'mlbb' ? 'User ID' : 'Free Fire ID'}
                       </label>
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-400 transition-colors" />
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <input
                           type="number"
                           value={form.userId}
@@ -427,7 +436,7 @@ function App() {
                             setValidationResult(null);
                             setFormErrors(prev => ({ ...prev, userId: undefined }));
                           }}
-                          className="pl-9 w-full rounded-lg bg-black/50 border border-gray-700 px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 text-sm group-hover:border-blue-500"
+                          className="pl-9 w-full rounded-lg bg-black/50 border border-gray-700 px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 text-sm"
                           placeholder={`Enter your ${form.game === 'mlbb' ? 'User ID' : 'Free Fire ID'}`}
                         />
                         {formErrors.userId && (
@@ -438,10 +447,10 @@ function App() {
 
                     {/* Server ID */}
                     {form.game === 'mlbb' && (
-                      <div className="group">
+                      <div>
                         <label className="block text-sm font-medium mb-1 text-gray-300">Server ID</label>
                         <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-blue-400 transition-colors" />
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                           <input
                             type="number"
                             value={form.serverId}
@@ -450,7 +459,7 @@ function App() {
                               setValidationResult(null);
                               setFormErrors(prev => ({ ...prev, serverId: undefined }));
                             }}
-                            className="pl-9 w-full rounded-lg bg-black/50 border border-gray-700 px-3 py-2.5 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 text-sm group-hover:border-blue-500"
+                            className="pl-9 w-full rounded-lg bg-black/50 border border-gray-700 px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 text-sm"
                             placeholder="Enter your Server ID"
                           />
                           {formErrors.serverId && (
@@ -467,12 +476,12 @@ function App() {
                           type="button"
                           onClick={validateAccount}
                           disabled={!form.userId || !form.serverId || validating}
-                          className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-4 py-2 rounded-lg hover:from-indigo-600 hover:to-blue-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm shadow-md hover:shadow-blue-500/30 transform hover:-translate-y-0.5"
+                          className="w-full bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm justify-center"
                         >
                           {validating ? (
                             <>
                               <Loader2 className="w-4 h-4 animate-spin" />
-                              Validating...
+                              Checking...
                             </>
                           ) : (
                             <>
@@ -482,9 +491,9 @@ function App() {
                           )}
                         </button>
                         {validationResult?.success && (
-                          <div className="flex items-center gap-2 text-green-400 text-sm animate-pulse">
+                          <div className="flex items-center gap-2 text-green-400 text-sm">
                             <CheckCircle2 className="w-4 h-4" />
-                            <span>Found: {form.nickname}</span>
+                            <span>Account found: {form.nickname}</span>
                           </div>
                         )}
                       </div>
@@ -492,13 +501,12 @@ function App() {
 
                     {/* Select Package */}
                     <div>
-                      <h3 className="text-lg font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-4 flex items-center gap-2">
-                        <span className="inline-block w-1 h-6 bg-gradient-to-b from-blue-400 to-purple-500 rounded"></span>
+                      <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
                         Select Package
                       </h3>
                       {loading ? (
                         <div className="flex justify-center items-center py-8">
-                          <Loader2 className="w-8 h-8 animate-spin text-blue-400" />
+                          <Loader2 className="w-8 h-8 animate-spin text-white" />
                           <span className="ml-2 text-white">Loading products...</span>
                         </div>
                       ) : (
@@ -513,7 +521,7 @@ function App() {
 
                     {/* Order Summary */}
                     {form.product && (
-                      <div className="bg-gradient-to-r from-sky-900/30 to-blue-900/20 rounded-lg p-4 border border-sky-500/30 shadow-md shadow-sky-500/10">
+                      <div className="bg-sky-500/20 rounded-lg p-4 border border-sky-500/30">
                         <h4 className="text-sm font-medium mb-2 text-white">Order Summary</h4>
                         <div className="space-y-2 font-mono text-sm">
                           <div className="flex items-center gap-2">
@@ -551,11 +559,11 @@ function App() {
             </div>
 
             {/* Submit Button */}
-            <div className="sticky bottom-4 bg-black/80 backdrop-blur-md rounded-xl p-4 border border-white/10 shadow-lg mt-8">
+            <div className="sticky bottom-4 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 shadow-lg mt-8">
               <button
                 type="submit"
                 disabled={form.game === 'mlbb' && !validationResult?.success || !form.product || paymentCooldown > 0}
-                className="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white py-3 px-6 rounded-lg hover:from-indigo-600 hover:to-blue-600 transition-all duration-300 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-indigo-500/30 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 px-6 rounded-lg hover:from-gray-900 hover:to-black transition-all duration-300 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-black disabled:hover:to-gray-800 hover:shadow-lg hover:shadow-black/20 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
               >
                 {paymentCooldown > 0 ? (
                   <>
@@ -585,8 +593,7 @@ function App() {
                   }}
                   className="flex items-center gap-2 bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded-full transition-all duration-300"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span className="text-sm font-medium">Logout</span>
+                  <LogOut className="w-4 h-4" /> Logout
                 </button>
               )}
               <a
@@ -595,8 +602,7 @@ function App() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-yellow-500/80 hover:bg-yellow-600/80 px-4 py-2 rounded-full transition-all duration-300"
               >
-                <MessageCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">Support</span>
+                <MessageCircle className="w-4 h-4" /> Support
               </a>
               <a
                 href={storeConfig.channelUrl || '#'}
@@ -605,46 +611,45 @@ function App() {
                 className="flex items-center gap-2 bg-[#0088CC]/80 hover:bg-[#0077B5]/80 px-4 py-2 rounded-full transition-all duration-300"
               >
                 <svg viewBox="0 0 496 512" className="w-5 h-5 fill-current text-white">
-                  <path d="M248 8C111 8 0 119 0 256S111 504 248 504 496 393 496 256 385 8 248 8zM363 176.7c-3.7 39.2-19.9 134.4-28.1 178.3-3.5 18.6-10.3 24.8-16.9 25.4-14.4 1.3-25.3-9.5-39.3-18.7-21.8-14.3-34.2-23.2-55.3-37.2-24.5-16.1-8.6-25 5.3-39.5 3.7-3.8 67.1-61.5 68.3-66.7 .2-.7 .3-3.1-1.2-4.4s-3.6-.8-5.1-.5q-3.3 .7-104.6 69.1-14.8 10.2-26.9 9.9c-8.9-.2-25.9-5-38.6-9.1-15.5-5-27.9-7.7-26.8-16.3q.8-6.7 18.5-13.7 108.4-47.2 144.6-62.3c68.9-28.6 83.2-33.6 92.5-33.8 2.1 0 6.6 .5 9.6 2.9a10.5 10.5 0 0 1 3.5 6.7A43.8 43.8 0 0 1 363 176.7z" />
-                </svg>
-                <span className="text-sm font-medium">Channel</span>
-              </a>
-              {storeConfig.footer.facebookLink && (
-                <a
-                  href={storeConfig.footer.facebookLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-[#1877F2]/80 hover:bg-[#166FE5]/80 px-4 py-2 rounded-full transition-all duration-300"
-                >
-                  <Facebook className="w-4 h-4" />
-                  <span className="text-sm font-medium">Facebook</span>
-                </a>
+                  <path d="M248 8C111 8 0 119 0 256S111 504 248 504 496 393 496 256 385 8 248 8zM363 176.7c-3.7 39.2-19.9 134.4-28.1 178.3-3.5 18.6-10.3 24.8-16.9 25.4-14.4 1.3-25.3-9.5-39.3-18.7-21.8-14.3-34.2-23.2-55.3-37.2-24.5-16.1-8.6-25 5.3-39.5 3.7-3.8 67.1-61.5 68.3-66.7 .2-.7 .3-3.1-1.2-4.4s-3.6-.8-5.1-.5q-3.3 .7-104.6 69.1-14.8 10.2-26.9 9.9c-8.9-.2-25.9-5-38.6-9.1-15.5-5-27.9-7.7-26.8-16.3q.8-6.7 18.5-13.7 108.4-47.2 144.6-62.3c68.9-28.6 83.2-33.6 92.5-33.8 2.1 0 6.6 .5 9.6 2.9a10.5 10.5 0 013.5 6.7A43.8 43.8 0 01363 176.7z" />
+                        </svg>
+                        <span className="text-sm font-medium">Channel</span>
+                      </a>
+                      {storeConfig.footer.facebookLink && (
+                        <a
+                          href={storeConfig.footer.facebookLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 bg-[#1877F2]/80 hover:bg-[#166FE5]/80 px-4 py-2 rounded-full transition-all duration-300"
+                        >
+                          <Facebook className="w-4 h-4" /> Facebook
+                        </a>
+                      )}
+                    </div>
+                    <div className="text-center text-white/60 text-sm">
+                      <p>{storeConfig.footer.copyright}</p>
+                    </div>
+                  </div>
+                </div>
+              </footer>
+
+              {/* Modals */}
+              {showCheckout && (
+                <PaymentModal
+                  form={form}
+                  orderFormat={orderFormat}
+                  onClose={handleClosePayment}
+                  discountPercent={discountPercent}
+                />
+              )}
+              {storeConfig.popupBanner.enabled && showPopupBanner && (
+                <PopupBanner
+                  image={storeConfig.popupBanner.image}
+                  onClose={() => setShowPopupBanner(false)}
+                />
               )}
             </div>
-            <div className="text-center text-white/60 text-sm">
-              <p>{storeConfig.footer.copyright}</p>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-      {/* Modals */}
-      {showCheckout && (
-        <PaymentModal
-          form={form}
-          orderFormat={orderFormat}
-          onClose={handleClosePayment}
-          discountPercent={discountPercent}
-        />
-      )}
-      {storeConfig.popupBanner.enabled && showPopupBanner && (
-        <PopupBanner
-          image={storeConfig.popupBanner.image}
-          onClose={() => setShowPopupBanner(false)}
-        />
-      )}
-    </div>
-  );
-}
+          );
+        }
 
 export default App;
