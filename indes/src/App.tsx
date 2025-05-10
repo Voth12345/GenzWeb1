@@ -628,7 +628,7 @@ const handleSubmit = (e: React.FormEvent) => {
                 </a>
               )}
             </div>
-            <div className="text-center text-white/60 text-sm">
+            <div className="text-center text-white text-sm">
               <p>{storeConfig.footer.copyright}</p>
             </div>
           </div>
