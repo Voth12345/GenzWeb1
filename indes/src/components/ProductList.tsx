@@ -6,12 +6,14 @@ interface Props {
   products: GameProduct[];
   selectedProduct: GameProduct | null;
   onSelect: (product: GameProduct) => void;
+  onNotify: (message: string) => void;
   game: string;
 }
 
-export function ProductList({ products, selectedProduct, onSelect, game }: Props) {
+export function ProductList({ products, selectedProduct, onSelect, onNotify, game }: Props) {
   const isReseller = localStorage.getItem('jackstore_reseller_auth') === 'true';
 
+  // Group products by type
   const groupedProducts = useMemo(() => {
     const groups = products.reduce((acc, product) => {
       const type = product.type;
@@ -22,6 +24,7 @@ export function ProductList({ products, selectedProduct, onSelect, game }: Props
       return acc;
     }, {} as Record<string, GameProduct[]>);
 
+    // Sort diamonds packages by amount
     if (groups.diamonds) {
       groups.diamonds.sort((a, b) => (a.diamonds || 0) - (b.diamonds || 0));
     }
@@ -29,6 +32,7 @@ export function ProductList({ products, selectedProduct, onSelect, game }: Props
     return groups;
   }, [products]);
 
+  // Helper function to get tagname icon
   const getTagIcon = (tagname: string) => {
     const lowercaseTag = tagname.toLowerCase();
     if (lowercaseTag.includes('hot')) return <Flame className="w-3 h-3" />;
@@ -41,51 +45,63 @@ export function ProductList({ products, selectedProduct, onSelect, game }: Props
   const renderProductCard = (product: GameProduct) => (
     <div
       key={product.id}
-      onClick={() => onSelect(product)}
-      className={`relative group overflow-visible rounded-lg transition-all duration-300 cursor-pointer border border-gray-500 bg-[#1A1A1A] ${
+      onClick={() => {
+        onSelect(product);
+        onNotify(
+          product.diamonds
+            ? `${product.diamonds} Diamonds = ${product.price.toFixed(2)}$`
+            : `${product.name} = ${product.price.toFixed(2)}$`
+        );
+      }}
+      className={`relative rounded-xl cursor-pointer border ${
         selectedProduct?.id === product.id
-          ? 'border-2 border-yellow-400 bg-gradient-to-br from-yellow-50/10 to-yellow-100/5 shadow-[inset_0_0_8px_4px_rgba(234,179,8,0.5)]'
-          : 'hover:bg-gray-800 shadow-md hover:shadow-lg shadow-gray-700/10 hover:shadow-gray-700/20'
+          ? 'border-2 border-blue-500 bg-blue-100/5'
+          : 'border-white/10 bg-white/5'
       }`}
     >
+      {/* Tagname badge */}
       {product.tagname && (
-        <div className="absolute -top-2 left-0 right-0 z-20 flex justify-center">
-          <div className="bg-gradient-to-r from-[#e10a0a] to-[#e10a0a] text-white px-2 py-1 rounded-full flex items-center gap-1 whitespace-nowrap text-xs font-bold shadow-lg shadow-[#e10a0a]/30">
+        <div className="absolute -top-3 left-0 right-0 flex justify-center">
+          <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 whitespace-nowrap text-xs font-bold">
             {getTagIcon(product.tagname)}
             <span>{product.tagname.toUpperCase()}</span>
           </div>
         </div>
       )}
 
-      <div className={`p-2 flex flex-row items-center gap-2 ${product.tagname ? 'pt-4' : ''}`}>
-        <div className="relative flex-shrink-0">
+      {/* Product content with horizontal layout */}
+      <div className={`p-2 flex flex-row items-center gap-2 ${product.tagname ? 'pt-6' : ''} h-16`}>
+        {/* Product image */}
+        <div className="flex-shrink-0">
           <img
             src={product.image || 'https://via.placeholder.com/40'}
             alt={product.name}
-            className="w-8 h-8 rounded-md object-cover shadow-sm"
+            className="w-10 h-10 rounded-lg object-cover"
             loading="lazy"
           />
           {selectedProduct?.id === product.id && (
-            <div className="absolute -top-1 -right-1 bg-yellow-400 text-yellow-900 rounded-full p-0.5 z-20 shadow-md">
+            <div className="absolute -top-2 -right-2 bg-blue-500 text-blue-900 rounded-full p-1">
               <Check className="w-3 h-3" />
             </div>
           )}
         </div>
-        
-        <div className="text-left space-y-0.5 flex-1">
-          <h3 className="font-medium text-xs text-white leading-tight truncate">{product.name}</h3>
+
+        {/* Product details in a vertical stack */}
+        <div className="text-left space-y-0.5 flex-1 overflow-hidden">
+         <h3 className="font-medium text-xs text-white leading-tight break-words">{product.name}</h3>
           {product.diamonds && (
             <div className="flex items-center gap-1">
             </div>
           )}
 
-          <div className="space-y-0.5">
+          {/* Price section */}
+          <div className="space-y-0">
             {product.originalPrice && product.discountApplied && product.discountApplied > 0 ? (
               <p className="text-[10px] text-gray-400 line-through">
                 ${product.originalPrice.toFixed(2)}
               </p>
             ) : null}
-            <p className="text-sm font-bold text-white">
+            <p className="text-sm font-bold text-blue-200">
               ${product.price.toFixed(2)}
               {product.originalPrice && product.discountApplied && product.discountApplied > 0 && (
                 <span className="text-[10px] text-green-400 ml-1">
@@ -94,7 +110,7 @@ export function ProductList({ products, selectedProduct, onSelect, game }: Props
               )}
             </p>
             {isReseller && product.resellerPrice && (
-              <p className="text-[10px] font-medium text-white">
+              <p className="text-[10px] font-medium text-blue-400/80">
                 Reseller: ${product.resellerPrice.toFixed(2)}
               </p>
             )}
@@ -106,52 +122,56 @@ export function ProductList({ products, selectedProduct, onSelect, game }: Props
 
   return (
     <div className="space-y-6">
+      {/* Special Packages */}
       {groupedProducts.special && (
         <div>
           <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-            <div className="p-1.5 bg-yellow-500/10 rounded-lg shadow-sm">
-              <Sparkles className="w-5 h-5 text-yellow-400" />
+            <div className="p-1.5 bg-blue-500/10 rounded-lg">
+              <Sparkles className="w-5 h-5 text-blue-400" />
             </div>
-            Best Seller
+            Promotion Packages
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
             {groupedProducts.special.map(renderProductCard)}
           </div>
         </div>
       )}
-      
+
+      {/* Diamonds Packages */}
       {groupedProducts.diamonds && (
         <div>
           <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-            <div className="p-1.5 bg-blue-500/10 rounded-lg shadow-sm">
+            <div className="p-1.5 bg-blue-500/10 rounded-lg">
             </div>
             Diamond Packages
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
             {groupedProducts.diamonds.map(renderProductCard)}
           </div>
         </div>
       )}
 
+      {/* Subscription Packages */}
       {groupedProducts.subscription && (
         <div>
           <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-            <div className="p-1.5 bg-purple-500/10 rounded-lg shadow-sm">
+            <div className="p-1.5 bg-purple-500/10 rounded-lg">
               <Crown className="w-5 h-5 text-purple-400" />
             </div>
             Subscription Packages
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
             {groupedProducts.subscription.map(renderProductCard)}
           </div>
         </div>
       )}
 
+      {/* Empty State */}
       {products.length === 0 && (
-        <div className="text-center py-10">
-          <div className="bg-gray-800 rounded-xl p-6 border border-gray-700 shadow-lg">
-            <Sparkles className="w-10 h-10 text-gray-400 mx-auto mb-3" />
-            <p className="text-lg font-medium text-white">
+        <div className="text-center py-12">
+          <div className="bg-white/5 rounded-xl p-8 border border-white/10">
+            <Sparkles className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <p className="text-white text-lg font-medium">
               No products available for {
                 game === 'mlbb' ? 'Mobile Legends' :
                 game === 'mlbb_ph' ? 'Mobile Legends PH' :
@@ -159,7 +179,7 @@ export function ProductList({ products, selectedProduct, onSelect, game }: Props
                 'Free Fire TH'
               }.
             </p>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-gray-400 mt-2">
               Please check back later for new products.
             </p>
           </div>
