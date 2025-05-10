@@ -49,3 +49,7 @@
     transform: translate(85px, 0%);
   }
 }
+
+.product-name {
+  overflow-wrap: anywhere; /* or word-break: break-word */
+}
