@@ -595,18 +595,18 @@ const handleSubmit = (e: React.FormEvent) => {
       ></path>
     </defs>
     <g className="wave1">
-      <use xlinkHref="#wave-path" x="50" y="3" fill="rgba(99, 103, 110, .1)" />
+      <use xlinkHref="#wave-path" x="50" y="3" fill="rgba(0, 0, 0, .1)" />
     </g>
     <g className="wave2">
-      <use xlinkHref="#wave-path" x="50" y="0" fill="rgba(99, 103, 110, .2)" />
+      <use xlinkHref="#wave-path" x="50" y="0" fill="rgba(0, 0, 0, .2)" />
     </g>
     <g className="wave3">
-      <use xlinkHref="#wave-path" x="50" y="4" fill="#63676e" />
+      <use xlinkHref="#wave-path" x="50" y="4" fill="#000000" />
     </g>
   </svg>
 </div>
         
-<footer className="relative text-white py-12 md:py-16 overflow-hidden" style={{ backgroundColor: '#63676e' }}>
+<footer className="relative text-white py-12 md:py-16 overflow-hidden" style={{ backgroundColor: '#000000' }}>
     {/* SVG Wave Overlay with Real Wave Animation */}
     <div className="container mx-auto px-4 relative z-10">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-12">
