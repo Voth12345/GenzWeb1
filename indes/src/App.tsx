@@ -614,7 +614,7 @@ const handleSubmit = (e: React.FormEvent) => {
           <div className="group relative">
             <img
               alt="logo"
-              src={storeConfig.logoUrl2}
+              src={storeConfig.logoUrl}
               className="h-16 md:h-20 mb-4 md:mb-6 rounded-full transition-all duration-300 group-hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20 object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80?text=No+Image';
