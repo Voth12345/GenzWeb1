@@ -50,7 +50,7 @@ function App() {
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState<MLBBValidationResponse | null>(null);
   const [showCheckout, setShowCheckout] = useState(false);
-  const [formErrors, setFormErrors] = useState<{ userId?: string; serverId?: string }>({});
+  const [formErrors, setFormErrors] = useState<{userId?: string; serverId?: string}>({});
   const [products, setProducts] = useState<GameProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdminRoute, setIsAdminRoute] = useState(false);
@@ -67,13 +67,15 @@ function App() {
       const path = window.location.pathname;
       setIsAdminRoute(path === '/adminlogintopup');
       setIsResellerRoute(path === '/reseller');
-      const resellerAuth = localStorage.getItem('genzstore_reseller_auth'); // Fixed key
+      const resellerAuth = localStorage.getItem('jackstore_reseller_auth');
       setIsResellerLoggedIn(resellerAuth === 'true');
     };
 
     checkRoute();
     window.addEventListener('popstate', checkRoute);
-    return () => window.removeEventListener('popstate', checkRoute);
+    return () => {
+      window.removeEventListener('popstate', checkRoute);
+    };
   }, []);
 
   // Fetch products on game change
@@ -281,7 +283,7 @@ function App() {
     >
       {/* Header */}
       <nav
-        className={`bg-gradient-to-r from-${storeConfig.colors.primary}-900/90 to-${storeConfig.colors.secondary}-900/90 text-white p-4 shadow-lg backdrop-blur-md sticky top-0 z-50`}
+        className={`bg-gradient-to-r from-black to-gray-800 text-white p-4 shadow-lg backdrop-blur-md sticky top-0 z-50`}
         style={{
           backgroundImage: `url("${storeConfig.backgroundImageUrl}")`,
           backgroundSize: 'cover',
@@ -292,10 +294,10 @@ function App() {
           <div className="flex items-center gap-4">
             <img src={storeConfig.logoUrl} alt="Logo" className="w-20 h-20 rounded-full" />
             <div>
-              <h1 className="text-3xl font-black text-black tracking-tight whitespace-nowrap">
+              <h1 className="text-3xl font-black text-white tracking-tight whitespace-nowrap">
                 {storeConfig.storeName}
               </h1>
-              <p className="text-xs text-black/80">{storeConfig.storeTagline}</p>
+              <p className="text-xs text-white/80">{storeConfig.storeTagline}</p>
               {isResellerLoggedIn && (
                 <span className="text-xs bg-yellow-500 text-black px-2 py-0.5 rounded-full font-medium">
                   Reseller Mode
@@ -308,7 +310,282 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-grow container mx-auto px-4 py-8">
-        {/* Your content here */}
+        {!showTopUp ? (
+          <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+            {/* MLBB */}
+            <div
+              onClick={() => {
+                setForm(prev => ({ ...prev, game: 'mlbb' }));
+                setShowTopUp(true);
+              }}
+              className="bg-gray-50 backdrop-blur-lg border border-stone-950 rounded-3xl p-4 text-sky-300 hover:bg-sky-50 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-sky-300"
+            >
+              <img
+                src={storeConfig.games.mlbb.logoUrl}
+                alt="Mobile Legends"
+                className="w-20 h-20 rounded-2xl mx-auto mb-3 transform group-hover:scale-110 transition-transform"
+              />
+              <h3
+                className="text-xl font-bold text-stone-950 text-center tracking-wide uppercase"
+                style={{ fontFamily: '"Fredoka One", cursive' }}
+              >
+                🎮 {storeConfig.games.mlbb.name}
+              </h3>
+              <p className="text-xs text-center text-black mt-2 font-light">
+                ✨ {storeConfig.games.mlbb.tagline}
+              </p>
+              <div className="mt-4 w-full bg-gradient-to-r from-black via-gray-800 to-black text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-xl hover:shadow-black/30 transform hover:-translate-y-1 transition-all duration-300">
+                💎 Top Up Now
+              </div>
+            </div>
+
+            {/* Free Fire */}
+            <div
+              onClick={() => {
+                setForm(prev => ({ ...prev, game: 'freefire' }));
+                setShowTopUp(true);
+              }}
+              className="bg-gray-50 backdrop-blur-lg border border-stone-950 rounded-3xl p-4 text-sky-300 hover:bg-sky-50 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-sky-300"
+            >
+              <img
+                src={storeConfig.games.freefire.logoUrl}
+                alt="Free Fire"
+                className="w-20 h-20 rounded-2xl mx-auto mb-3 transform group-hover:scale-110 transition-transform"
+              />
+              <h3
+                className="text-xl font-bold text-stone-950 text-center tracking-wide uppercase"
+                style={{ fontFamily: '"Fredoka One", cursive' }}
+              >
+                🔥 {storeConfig.games.freefire.name}
+              </h3>
+              <p className="text-xs text-center text-black mt-2 font-light">
+                ✨ {storeConfig.games.freefire.tagline}
+              </p>
+              <div className="mt-4 w-full bg-gradient-to-r from-black via-gray-800 to-black text-white py-2 px-4 rounded-full text-sm font-semibold hover:shadow-xl hover:shadow-black/30 transform hover:-translate-y-1 transition-all duration-300">
+                💎 Top Up Now
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-4xl mx-auto space-y-6">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => {
+                  setShowTopUp(false);
+                  setShowCheckout(false);
+                }}
+                className="text-white hover:text-green-200 transition-colors text-sm flex items-center gap-2 bg-white/10 px-3 py-1.5 rounded-lg"
+              >
+                <ArrowLeft className="w-4 h-4" /> Back to Games
+              </button>
+              {(form.userId || form.serverId) && (
+                <button
+                  onClick={clearSavedInfo}
+                  className="text-red-300 hover:text-red-200 transition-colors text-sm flex items-center gap-2 bg-red-500/10 px-3 py-1.5 rounded-lg"
+                >
+                  <XCircle className="w-4 h-4" /> Clear Saved Info
+                </button>
+              )}
+            </div>
+
+            {/* Top-Up Panel */}
+            <div className="bg-white border border-gray-200/10 rounded-xl p-6 text-black shadow-xl">
+              <div className="flex flex-col space-y-4">
+                {/* Game Info Header */}
+                <div className="flex items-start gap-4">
+                  <img
+                    src={
+                      form.game === 'mlbb'
+                        ? "https://play-lh.googleusercontent.com/M9_okpLdBz0unRHHeX7FcZxEPLZDIQNCGEBoql7MxgSitDL4wUy4iYGQxfvqYogexQ "
+                        : "https://play-lh.googleusercontent.com/WWcssdzTZvx7Fc84lfMpVuyMXg83_PwrfpgSBd0IID_IuupsYVYJ34S9R2_5x57gHQ "
+                    }
+                    alt={form.game === 'mlbb' ? "Mobile Legends" : "Free Fire"}
+                    className="w-16 h-16 rounded-xl border border-gray-800/20"
+                  />
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold text-white">
+                      {form.game === 'mlbb' ? 'Mobile Legends' : 'Free Fire'}
+                    </h2>
+                    <div className="flex items-center gap-3 mt-2">
+                      <div className="flex items-center gap-2">
+                        <img
+                          src="https://raw.githubusercontent.com/Cheagjihvg/feliex-assets/main/48_-Protected_System-_Yellow-512-removebg-preview.png "
+                          alt="Safety Guarantee"
+                          className="w-5 h-5"
+                        />
+                        <span className="text-sm text-sky-300">Safety Guarantees</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <img
+                          src="https://raw.githubusercontent.com/Cheagjihvg/feliex-assets/main/IMG_1820.PNG "
+                          alt="Instant Delivery"
+                          className="w-5 h-5"
+                        />
+                        <span className="text-sm text-sky-300">Instant Delivery</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Form section */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className={`grid ${form.game === 'mlbb' ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-4`}>
+                    {/* User ID */}
+                    <div>
+                      <label className="block text-sm font-medium mb-1">
+                        {form.game === 'mlbb' ? 'User ID' : 'Free Fire ID'}
+                      </label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white-300 w-4 h-4" />
+                        <input
+                          type="number"
+                          value={form.userId}
+                          onChange={(e) => {
+                            setForm(prev => ({ ...prev, userId: e.target.value, nickname: undefined }));
+                            setValidationResult(null);
+                            setFormErrors(prev => ({ ...prev, userId: undefined }));
+                          }}
+                          className="pl-9 w-full rounded-lg bg-black/10 border border-gray-800/20 px-3 py-2 focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-200 text-white placeholder-gray-300 text-sm"
+                          placeholder={`Enter your ${form.game === 'mlbb' ? 'User ID' : 'Free Fire ID'}`}
+                        />
+                        {formErrors.userId && (
+                          <p className="text-red-400 text-xs mt-1">{formErrors.userId}</p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Server ID */}
+                    {form.game === 'mlbb' && (
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Server ID</label>
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-white-300 w-4 h-4" />
+                          <input
+                            type="number"
+                            value={form.serverId}
+                            onChange={(e) => {
+                              setForm(prev => ({ ...prev, serverId: e.target.value, nickname: undefined }));
+                              setValidationResult(null);
+                              setFormErrors(prev => ({ ...prev, serverId: undefined }));
+                            }}
+                            className="pl-9 w-full rounded-lg bg-white/10 border border-white/20 px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-white placeholder-pink-300 text-sm"
+                            placeholder="Enter your Server ID"
+                          />
+                          {formErrors.serverId && (
+                            <p className="text-red-400 text-xs mt-1">{formErrors.serverId}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Validate Account Button */}
+                    {form.game === 'mlbb' && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={validateAccount}
+                          disabled={!form.userId || !form.serverId || validating}
+                          className="w-full bg-sky-300 text-white px-4 py-2 rounded-lg hover:bg-sky-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm justify-center"
+                        >
+                          {validating ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Checking...
+                            </>
+                          ) : (
+                            <>
+                              <Search className="w-4 h-4" />
+                              Check ID
+                            </>
+                          )}
+                        </button>
+                        {validationResult?.success && (
+                          <div className="flex items-center gap-2 text-green-400 text-sm">
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Account found: {form.nickname}</span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Select Package */}
+                    <div>
+                      <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                        Select Package
+                      </h3>
+                      {loading ? (
+                        <div className="flex justify-center items-center py-8">
+                          <Loader2 className="w-8 h-8 animate-spin text-white" />
+                          <span className="ml-2 text-white">Loading products...</span>
+                        </div>
+                      ) : (
+                        <ProductList
+                          products={products}
+                          selectedProduct={form.product}
+                          onSelect={(product) => setForm(prev => ({ ...prev, product }))}
+                          game={form.game}
+                        />
+                      )}
+                    </div>
+
+                    {/* Order Summary */}
+                    {form.product && (
+                      <div className="bg-sky-300 rounded-lg p-4 border border-sky-300">
+                        <h4 className="text-sm font-medium mb-2 text-white">Order Summary</h4>
+                        <div className="space-y-2 font-mono text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-pink-300">ID:</span>
+                            <span className="text-white">{form.userId}</span>
+                          </div>
+                          {form.game === 'mlbb' && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-pink-300">SERVER ID:</span>
+                              <span className="text-white">{form.serverId}</span>
+                            </div>
+                          )}
+                          {form.game === 'freefire' && (
+                            <div className="flex items-center gap-2">
+                              <span className="text-sky-300">SERVER ID:</span>
+                              <span className="text-white">0</span>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-2">
+                            <span className="text-black">ITEM:</span>
+                            <span className="text-white">
+                              {form.product.code || form.product.diamonds || form.product.name}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-black">PRICE:</span>
+                            <span className="text-white">${form.product.price.toFixed(2)} USD</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Submit Button */}
+                    <div className="sticky bottom-4 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 shadow-lg mt-8">
+                      <button
+                        type="submit"
+                        disabled={form.game === 'mlbb' && !validationResult?.success || !form.product || paymentCooldown > 0}
+                        className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 px-6 rounded-lg hover:from-gray-900 hover:to-black transition-all duration-300 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-black disabled:hover:to-gray-800 hover:shadow-lg hover:shadow-black/20 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                      >
+                        {paymentCooldown > 0 ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Please wait {paymentCooldown}s
+                          </>
+                        ) : (
+                          'Continue to Payment'
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Footer */}
@@ -319,8 +596,8 @@ function App() {
               {isResellerLoggedIn && (
                 <button
                   onClick={() => {
-                    localStorage.removeItem('genzstore_reseller_auth');
-                    localStorage.removeItem('genzstore_reseller_username');
+                    localStorage.removeItem('jackstore_reseller_auth');
+                    localStorage.removeItem('jackstore_reseller_username');
                     window.location.reload();
                   }}
                   className="flex items-center gap-2 bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded-full transition-all duration-300"
@@ -329,9 +606,8 @@ function App() {
                   <span className="text-sm font-medium">Logout</span>
                 </button>
               )}
-
               <a
-                href={storeConfig.supportUrl}
+                href={storeConfig.supportUrl || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-yellow-500/80 hover:bg-yellow-600/80 px-4 py-2 rounded-full transition-all duration-300"
@@ -339,9 +615,8 @@ function App() {
                 <MessageCircle className="w-4 h-4" />
                 <span className="text-sm font-medium">Support</span>
               </a>
-
               <a
-                href={storeConfig.channelUrl}
+                href={storeConfig.channelUrl || '#'}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 bg-[#0088CC]/80 hover:bg-[#0077B5]/80 px-4 py-2 rounded-full transition-all duration-300"
@@ -351,7 +626,6 @@ function App() {
                 </svg>
                 <span className="text-sm font-medium">Channel</span>
               </a>
-
               {storeConfig.footer.facebookLink && (
                 <a
                   href={storeConfig.footer.facebookLink}
