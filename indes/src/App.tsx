@@ -579,61 +579,154 @@ const handleSubmit = (e: React.FormEvent) => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-black/50 text-white py-6">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap justify-center gap-3 mb-4">
-              {isResellerLoggedIn && (
-                <button
-                  onClick={() => {
-                    localStorage.removeItem('jackstore_reseller_auth');
-                    localStorage.removeItem('jackstore_reseller_username');
-                    window.location.reload();
-                  }}
-                  className="flex items-center gap-2 bg-red-500/80 hover:bg-red-600/80 px-4 py-2 rounded-full transition-all duration-300"
+<div className="relative w-full h-[90px] overflow-hidden">
+  <svg
+    width="100%"
+    className="hero-waves absolute top-0 left-0 z-10"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlnsXlink="http://www.w3.org/1999/xlink"
+    viewBox="0 24 150 28"
+    preserveAspectRatio="none"
+  >
+    <defs>
+      <path
+        id="wave-path"
+        d="M-160 44c30 0 58-18 88-18s 58 18 88 18 58-18 88-18 58 18 88 18 v44h-352z"
+      ></path>
+    </defs>
+    <g className="wave1">
+      <use xlinkHref="#wave-path" x="50" y="3" fill="rgba(99, 103, 110, .1)" />
+    </g>
+    <g className="wave2">
+      <use xlinkHref="#wave-path" x="50" y="0" fill="rgba(99, 103, 110, .2)" />
+    </g>
+    <g className="wave3">
+      <use xlinkHref="#wave-path" x="50" y="4" fill="#63676e" />
+    </g>
+  </svg>
+</div>
+        
+<footer className="relative text-white py-12 md:py-16 overflow-hidden" style={{ backgroundColor: '#63676e' }}>
+    {/* SVG Wave Overlay with Real Wave Animation */}
+    <div className="container mx-auto px-4 relative z-10">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 md:gap-12">
+        <div className="space-y-8">
+          <div className="group relative">
+            <img
+              alt="logo"
+              src={storeConfig.logoUrl2}
+              className="h-16 md:h-20 mb-4 md:mb-6 rounded-full transition-all duration-300 group-hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20 object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'https://via.placeholder.com/80?text=No+Image';
+              }}
+            />
+            <p className="text-gray-300 text-sm md:text-base leading-relaxed max-w-md">
+              Experience seamless online game top-up services with unbeatable deals on Mobile Legends, Free Fire, and more. Fast, secure, and reliable transactions every time.
+            </p>
+          </div>
+          <div>
+            <h4 className="text-lg md:text-xl font-bold mb-4 md:mb-6 text-white border-b border-gray-600/50 pb-2 tracking-wide">
+              Contact Us
+            </h4>
+            <div className="space-y-3 text-gray-300">
+              <p className="text-sm">Reach out via Telegram for inquiries (Chat only)</p>
+              <a
+                href={storeConfig.supportUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-all duration-300 group/link"
+              >
+                <span className="text-sm font-medium group-hover/link:underline">Visit Support</span>
+                <svg
+                  className="w-4 h-4 opacity-0 group-hover/link:opacity-100 transition-opacity duration-300"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
                 >
-                  <LogOut className="w-4 h-4" />
-                  <span className="text-sm font-medium">Logout</span>
-                </button>
-              )}
-              <a
-                href={storeConfig.supportUrl || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-yellow-500/80 hover:bg-yellow-600/80 px-4 py-2 rounded-full transition-all duration-300"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span className="text-sm font-medium">Support</span>
-              </a>
-              <a
-                href={storeConfig.channelUrl || '#'}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 bg-[#0088CC]/80 hover:bg-[#0077B5]/80 px-4 py-2 rounded-full transition-all duration-300"
-              >
-                <svg viewBox="0 0 496 512" className="w-5 h-5 fill-current text-white">
-                  <path d="M248 8C111 8 0 119 0 256S111 504 248 504 496 393 496 256 385 8 248 8zM363 176.7c-3.7 39.2-19.9 134.4-28.1 178.3-3.5 18.6-10.3 24.8-16.9 25.4-14.4 1.3-25.3-9.5-39.3-18.7-21.8-14.3-34.2-23.2-55.3-37.2-24.5-16.1-8.6-25 5.3-39.5 3.7-3.8 67.1-61.5 68.3-66.7 .2-.7 .3-3.1-1.2-4.4s-3.6-.8-5.1-.5q-3.3 .7-104.6 69.1-14.8 10.2-26.9 9.9c-8.9-.2-25.9-5-38.6-9.1-15.5-5-27.9-7.7-26.8-16.3q.8-6.7 18.5-13.7 108.4-47.2 144.6-62.3c68.9-28.6 83.2-33.6 92.5-33.8 2.1 0 6.6 .5 9.6 2.9a10.5 10.5 0 0 1 3.5 6.7A43.8 43.8 0 0 1 363 176.7z" />
+                  <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
                 </svg>
-                <span className="text-sm font-medium">Channel</span>
               </a>
-              {storeConfig.footer.facebookLink && (
-                <a
-                  href={storeConfig.footer.facebookLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 bg-[#1877F2]/80 hover:bg-[#166FE5]/80 px-4 py-2 rounded-full transition-all duration-300"
-                >
-                  <Facebook className="w-4 h-4" />
-                  <span className="text-sm font-medium">Facebook</span>
-                </a>
-              )}
-            </div>
-            <div className="text-center text-white text-sm">
-              <p>{storeConfig.footer.copyright}</p>
             </div>
           </div>
         </div>
-      </footer>
+        <div className="space-y-8 md:space-y-10 flex flex-col justify-center items-center">
+          <div>
+            <h4 className="text-lg md:text-xl font-bold mb-4 md:mb-6 text-white border-b border-gray-600/50 pb-2 tracking-wide">
+              Connect With Us
+            </h4>
+            <div className="flex flex-col space-y-4">
+              <div className="flex flex-wrap gap-6 justify-center">
+                {[
+                  { href: storeConfig.fb, color: 'hover:text-blue-400', icon: <path d="M12 2.04c-5.5 0-10 4.49-10 10.02c0 5 3.66 9.15 8.44 9.9v-7H7.9v-2.9h2.54V9.85c0-2.51 1.49-3.89 3.78-3.89c1.09 0 2.23.19 2.23.19v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.88h2.78l-.45 2.9h-2.33v7a10 10 0 0 0 8.44-9.9c0-5.53-4.5-10.02-10-10.02" /> },
+                  { href: storeConfig.channelUrl, color: 'hover:text-blue-400', icon: <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10s10-4.48 10-10S17.52 2 12 2m4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19c-.14.75-.42 1-.68 1.03c-.58.05-1.02-.38-1.58-.75c-.88-.58-1.38-.94-2.23-1.5c-.94-.65-.33-1.01.21-1.59c.14-.15 2.71-2.48 2.76-2.69c.01-.05.01-.1-.02-.14c-.04-.05-.1-.03-.14-.02c-.06.02-1.49.95-4.22 2.79c-.4.27-.76.41-1.08.4c-.36-.01-1.04-.20-1.55-.37c-.63-.2-1.13-.31-1.09-.66c.02-.18.27-.36.74-.55c2.92-1.27 4.86-2.11 5.83-2.51c2.78-1.16 3.35-1.36 3.73-1.36c.08 0 .27.02.39.12c.1.08.13.19.12.27" /> },
+                ].map((social, index) => (
+                  <a
+                    key={index}
+                    href={social.href}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className={`text-gray-300 ${social.color} transition-all duration-300 transform hover:scale-125 hover:shadow-lg`}
+                  >
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="hover:animate-pulse">
+                      {social.icon}
+                    </svg>
+                  </a>
+                ))}
+              </div>
+              {/* Shorter and Centered Join Our Channel Button */}
+              <div className="flex justify-center">
+                <a
+                  href={storeConfig.channelUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 hover:from-blue-600 hover:to-blue-800 px-4 py-2 rounded-full text-sm font-medium text-white transition-all duration-300 shadow-md hover:shadow-blue-500/50 transform hover:-translate-y-0.5 animate-pulse-slow group"
+                >
+                  <svg
+                    className="w-4 h-4 transition-transform duration-300 group-hover:rotate-12"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19c-.14.75-.42 1-.68 1.03c-.58.05-1.02-.38-1.58-.75c-.88-.58-1.38-.94-2.23-1.5c-.94-.65-.33-1.01.21-1.59.14-.15 2.71-2.48 2.76-2.69c.01-.05.01-.1-.02-.14c-.04-.05-.1-.03-.14-.02c-.06.02-1.49.95-4.22 2.79c-.4.27-.76.41-1.08.4c-.36-.01-1.04-.20-1.55-.37c-.63-.2-1.13-.31-1.09-.66c.02-.18.27-.36.74-.55c2.92-1.27 4.86-2.11 5.83-2.51c2.78-1.16 3.35-1.36 3.73-1.36c.08 0 .27.02.39.12c.1.08.13.19.12.27" />
+                  </svg>
+                  <span className="relative">
+                    Join our channel
+                    <span className="absolute -bottom-0.5 left-0 w-full h-0.5 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                  </span>
+                  <span className="text-sm animate-bounce">✨</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-8">
+          <div>
+            <h4 className="text-lg md:text-xl font-bold mb-4 md:mb-6 text-white border-b border-gray-600/50 pb-2 tracking-wide">
+              Payment Methods
+            </h4>
+            <div className="flex items-center gap-4 md:gap-6">
+              <img
+                alt="KHQR"
+                src="https://raw.githubusercontent.com/Cheagjihvg/svg/aee1480802998cec595324cb335444a14b4a48ea/khqr.svg"
+                className="h-10 md:h-12 transition-transform duration-300 hover:scale-110 hover:shadow-md hover:shadow-white/20"
+              />
+            </div>
+          </div>
+          {isResellerLoggedIn && (
+            <button
+              onClick={() => {
+                localStorage.removeItem('jackstore_reseller_auth');
+                localStorage.removeItem('jackstore_reseller_username');
+                window.location.reload();
+              }}
+              className="group flex items-center gap-3 bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 px-5 py-2.5 md:px-6 md:py-3 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:shadow-red-600/40 transform hover:-translate-y-1"
+            >
+              <LogOut className="w-4 h-4 md:w-5 md:h-5 transition-transform duration-300 group-hover:rotate-12" />
+              <span className="text-sm font-semibold tracking-wide">Logout</span>
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  </footer>
 
       {/* Modals */}
       {showCheckout && (
