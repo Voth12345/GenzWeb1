@@ -301,7 +301,7 @@ const handleSubmit = (e: React.FormEvent) => {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-grow container mx-auto px-4 py-8">
+<main className="container mx-auto px-4 py-8">
         {!showTopUp ? (
           <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
             {/* MLBB */}
@@ -382,7 +382,6 @@ const handleSubmit = (e: React.FormEvent) => {
             {/* Top-Up Panel */}
             <div className="bg-black border border-gray-800/40 rounded-xl p-6 text-white shadow-xl">
               <div className="flex flex-col space-y-4">
-                {/* Game Info Header */}
                 <div className="flex items-start gap-4">
                   <img
                     src={
