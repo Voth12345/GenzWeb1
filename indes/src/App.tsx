@@ -272,7 +272,7 @@ const handleSubmit = (e: React.FormEvent) => {
   }
 
   return (
-    <div className="min-h-screen bg-stone-300 bg-fixed bg-cover bg-center flex flex-col relative">
+    <div className="min-h-screen bg-dark-300 bg-fixed bg-cover bg-center flex flex-col relative">
       {/* Header */}
       <nav
         className={`bg-gradient-to-r from-black to-gray-800 text-white p-4 shadow-lg backdrop-blur-md sticky top-0 z-50`}
