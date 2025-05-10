@@ -279,7 +279,7 @@ function App() {
   return (
     <div
       className="min-h-screen bg-fixed bg-cover bg-center flex flex-col relative"
-      style={{ backgroundColor: '#f9f5fc' }}
+      style={{ backgroundColor: '#42f2f5' }}
     >
       {/* Header */}
       <nav
