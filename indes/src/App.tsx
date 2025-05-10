@@ -579,7 +579,7 @@ const handleSubmit = (e: React.FormEvent) => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-black/90 text-white py-6">
+      <footer className="bg-black/50 text-white py-6">
         <div className="container mx-auto px-4">
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap justify-center gap-3 mb-4">
