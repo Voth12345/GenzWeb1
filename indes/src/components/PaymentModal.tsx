@@ -82,7 +82,7 @@ const usePaymentVerification = (
   const [autoCheckEnabled, setAutoCheckEnabled] = useState(false);
   const verificationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const verificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const telegramSentRef = useRef(false); // Prevent double Telegram send
+  const telegramSentRef = useRef(false); // Prevents double Telegram send
 
   const verifyPayment = useCallback(async () => {
     if (!md5Hash || isProcessing) return false;
@@ -101,13 +101,14 @@ const usePaymentVerification = (
       }
 
       if (response.data.responseCode === 1) {
-        return false;
+        return false; // Transaction not found, continue checking
       }
 
-      throw new Error('Payment verification failed');
+      throw new Error(response.data.message || 'Payment verification failed');
     } catch (error) {
       console.error('Payment verification error:', error);
       setStatus('error');
+      setIsProcessing(false); // Ensure isProcessing is reset
       return false;
     } finally {
       setIsProcessing(false);
@@ -118,12 +119,14 @@ const usePaymentVerification = (
     setAutoCheckEnabled(true);
     setCheckCount(0);
 
-    const firstCheck = setTimeout(() => {
-      verifyPayment();
-      verificationIntervalRef.current = setInterval(async () => {
-        setCheckCount((prev) => prev + 1);
-        await verifyPayment();
-      }, CHECK_INTERVAL);
+    const firstCheck = setTimeout(async () => {
+      const success = await verifyPayment();
+      if (!success) {
+        verificationIntervalRef.current = setInterval(async () => {
+          setCheckCount((prev) => prev + 1);
+          await verifyPayment();
+        }, CHECK_INTERVAL);
+      }
     }, 7000);
 
     verificationTimeoutRef.current = setTimeout(() => {
@@ -363,11 +366,13 @@ export function PaymentModal({ form, orderFormat, onClose, discountPercent = 0 }
     };
   }, [md5Hash, autoCheckEnabled, startVerification, cleanup, startCheckCountdown]);
 
-  useEffect(() =>             return () => {
-    cleanup();
-    stopCheckCountdown();
-    stopQrCooldown();
-    if (qrTimeoutRef.current) clearTimeout(qrTimeoutRef.current);
+  useEffect(() => {
+    return () => {
+      cleanup();
+      stopCheckCountdown();
+      stopQrCooldown();
+      if (qrTimeoutRef.current) clearTimeout(qrTimeoutRef.current);
+    };
   }, [cleanup, stopCheckCountdown, stopQrCooldown]);
 
   return (
