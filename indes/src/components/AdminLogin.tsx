@@ -26,12 +26,12 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
       
       if (error) throw error;
       
-      if (data.user?.email !== 'brohin2006@gmail.com') {
+      if (data.user?.email !== 'pichpanhavoth4@gmail.com') {
         throw new Error('Unauthorized access');
       }
 
       // Store authentication state in session storage
-      sessionStorage.setItem('jackstore_admin_auth', 'true');
+      sessionStorage.setItem('genzstore_admin_auth', 'true');
       onLogin();
     } catch (error) {
       console.error('Login error:', error);
