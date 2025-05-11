@@ -140,7 +140,7 @@ export function PaymentModal({ form, orderFormat, onClose, discountPercent = 0 }
 
       if (products) {
         const currentPrice = products.price;
-        const isReseller = localStorage.getItem('jackstore_reseller_auth') === 'true';
+        const isReseller = localStorage.getItem('genz_reseller_auth') === 'true';
 
         if (isReseller) {
           const { data: resellerPrice } = await supabase
@@ -515,7 +515,7 @@ const sendToTelegram = async () => {
               alt="KHQR Logo"
               className="w-6 h-6"
             />
-            <span className="font-semibold text-sm">KHQR Panha TopUp</span>
+            <span className="font-semibold text-sm">KHQR GENZ TOPUP</span>
           </div>
           <button onClick={handleClose} className="text-white/80 hover:text-white transition-colors">
             <X className="w-5 h-5" />
