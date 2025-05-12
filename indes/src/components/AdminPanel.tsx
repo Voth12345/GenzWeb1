@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../lib/supabase';
-import { GameProduct, Reseller, ResellerPrice } from '../types';
+import { supabase } from './lib/supabase';
+import { FitnessProduct, Trainer, TrainerPrice } from './types';
 import { Loader2, Plus, Trash, Edit, Save, X, LogOut, RefreshCw, Users, ShoppingBag, Settings, DollarSign, Tag, Image as ImageIcon, BarChart2 } from 'lucide-react';
-import { ResellerManager } from './ResellerManager';
-import { ResellerPriceManager } from './ResellerPriceManager';
+import { TrainerManager } from './TrainerManager';
+import { TrainerPriceManager } from './TrainerPriceManager';
 import { PromoCodeManager } from './PromoCodeManager';
 
 // Interface for transaction metrics
@@ -19,15 +19,15 @@ interface AdminPanelProps {
 }
 
 export function AdminPanel({ onLogout }: AdminPanelProps) {
-  const [mlbbProducts, setMlbbProducts] = useState<GameProduct[]>([]);
-  const [ffProducts, setFfProducts] = useState<GameProduct[]>([]);
+  const [workoutPlans, setWorkoutPlans] = useState<FitnessProduct[]>([]);
+  const [nutritionPlans, setNutritionPlans] = useState<FitnessProduct[]>([]);
   const [logoBanner, setLogoBanner] = useState<string | null>(null);
   const [transactionsPerMonth, setTransactionsPerMonth] = useState<TransactionMetric[]>([]);
   const [transactionsPerDay, setTransactionsPerDay] = useState<TransactionMetric[]>([]);
-  const [resellerCount, setResellerCount] = useState<number>(0);
+  const [trainerCount, setTrainerCount] = useState<number>(0);
   const [userCount, setUserCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'mlbb' | 'freefire' | 'resellers' | 'prices' | 'promos' | 'settings' | 'dashboard'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'workouts' | 'nutrition' | 'trainers' | 'prices' | 'promos' | 'settings' | 'dashboard'>('dashboard');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
@@ -36,37 +36,37 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   
   // New product form state
-  const [newProduct, setNewProduct] = useState<Partial<GameProduct>>({
+  const [newProduct, setNewProduct] = useState<Partial<FitnessProduct>>({
     name: '',
-    diamonds: undefined,
+    duration: undefined,
     price: 0,
     currency: 'USD',
-    type: 'diamonds',
-    game: 'mlbb',
+    type: 'beginner',
+    category: 'workouts',
     image: '',
     code: ''
   });
   
   // Editing product state
-  const [editingProduct, setEditingProduct] = useState<GameProduct | null>(null);
+  const [editingProduct, setEditingProduct] = useState<FitnessProduct | null>(null);
 
   // Fetch all data
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch MLBB products
-      const { data: mlbbData, error: mlbbError } = await supabase
-        .from('mlbb_products')
+      // Fetch workout plans
+      const { data: workoutData, error: workoutError } = await supabase
+        .from('workout_plans')
         .select('*')
         .order('id', { ascending: true });
-      if (mlbbError) throw mlbbError;
+      if (workoutError) throw workoutError;
 
-      // Fetch Free Fire products
-      const { data: ffData, error: ffError } = await supabase
-        .from('freefire_products')
+      // Fetch nutrition plans
+      const { data: nutritionData, error: nutritionError } = await supabase
+        .from('nutrition_plans')
         .select('*')
         .order('id', { ascending: true });
-      if (ffError) throw ffError;
+      if (nutritionError) throw nutritionError;
 
       // Fetch logo banner
       const { data: settingsData, error: settingsError } = await supabase
@@ -90,11 +90,11 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
       if (dailyTxError) throw dailyTxError;
 
-      // Fetch reseller count
-      const { count: resellerCountData, error: resellerCountError } = await supabase
-        .from('resellers')
+      // Fetch trainer count
+      const { count: trainerCountData, error: trainerCountError } = await supabase
+        .from('trainers')
         .select('*', { count: 'exact', head: true });
-      if (resellerCountError) throw resellerCountError;
+      if (trainerCountError) throw trainerCountError;
 
       // Fetch user count
       const { count: userCountData, error: userCountError } = await supabase
@@ -103,27 +103,27 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       if (userCountError) throw userCountError;
 
       // Transform product data
-      const transformedMlbbProducts: GameProduct[] = mlbbData.map(product => ({
+      const transformedWorkoutPlans: FitnessProduct[] = workoutData.map(product => ({
         id: product.id,
         name: product.name,
-        diamonds: product.diamonds || undefined,
+        duration: product.duration ?? null,
         price: product.price,
         currency: product.currency,
-        type: product.type as 'diamonds' | 'subscription' | 'special',
-        game: 'mlbb',
-        image: product.image || undefined,
-        code: product.code || undefined
+        type: product.type as 'beginner' | 'intermediate' | 'advanced',
+        category: 'workouts',
+        image: product.image ?? null,
+        code: product.code ?? null
       }));
 
-      const transformedFfProducts: GameProduct[] = ffData.map(product => ({
+      const transformedNutritionPlans: FitnessProduct[] = nutritionData.map(product => ({
         id: product.id,
         name: product.name,
-        diamonds: product.diamonds || undefined,
+        duration: product.duration ?? null,
         price: product.price,
         currency: product.currency,
-        type: product.type as 'diamonds' | 'subscription' | 'special',
-        game: 'freefire',
-        image: product.image || undefined
+        type: product.type as 'beginner' | 'intermediate' | 'advanced',
+        category: 'nutrition',
+        image: product.image ?? null
       }));
 
       // Transform transaction data
@@ -131,9 +131,9 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       monthlyTxData.forEach(row => {
         const date = new Date(row.created_at);
         const year = date.getFullYear();
-        const month = date.getMonth() + 1; // JavaScript months are 0-based
+        const month = date.getMonth() + 1;
         const key = `${year}-${month}`;
-        monthlyCounts[key] = (monthlyCounts[key] || 0) + 1;
+        monthlyCounts[key] = (monthlyCounts[key] ?? 0) + 1;
       });
 
       const transformedMonthlyTx: TransactionMetric[] = Object.entries(monthlyCounts).map(([key, count]) => {
@@ -148,7 +148,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         const month = date.getMonth() + 1;
         const day = date.getDate();
         const key = `${year}-${month}-${day}`;
-        dailyCounts[key] = (dailyCounts[key] || 0) + 1;
+        dailyCounts[key] = (dailyCounts[key] ?? 0) + 1;
       });
 
       const transformedDailyTx: TransactionMetric[] = Object.entries(dailyCounts).map(([key, count]) => {
@@ -156,13 +156,13 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         return { year, month, day, count };
       }).sort((a, b) => a.year - b.year || a.month - b.month || (a.day! - b.day!));
 
-      setMlbbProducts(transformedMlbbProducts);
-      setFfProducts(transformedFfProducts);
-      setLogoBanner(settingsData?.value || null);
+      setWorkoutPlans(transformedWorkoutPlans);
+      setNutritionPlans(transformedNutritionPlans);
+      setLogoBanner(settingsData?.value ?? null);
       setTransactionsPerMonth(transformedMonthlyTx);
       setTransactionsPerDay(transformedDailyTx);
-      setResellerCount(resellerCountData || 0);
-      setUserCount(userCountData || 0);
+      setTrainerCount(trainerCountData ?? 0);
+      setUserCount(userCountData ?? 0);
     } catch (error) {
       console.error('Error fetching data:', error);
       alert('Failed to load data. Please try again.');
@@ -182,15 +182,15 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   };
 
   // Validate product form
-  const validateForm = (product: Partial<GameProduct>): boolean => {
+  const validateForm = (product: Partial<FitnessProduct>): boolean => {
     const errors: {[key: string]: string} = {};
     
     if (!product.name?.trim()) {
       errors.name = 'Name is required';
     }
     
-    if (product.type === 'diamonds' && !product.diamonds) {
-      errors.diamonds = 'Diamonds amount is required for diamond type products';
+    if (product.type === 'beginner' && !product.duration) {
+      errors.duration = 'Duration is required for beginner plans';
     }
     
     if (product.price === undefined || product.price <= 0) {
@@ -215,13 +215,13 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
-    product: Partial<GameProduct> = newProduct
+    product: Partial<FitnessProduct> = newProduct
   ) => {
     const { name, value, type } = e.target;
     
     setFormErrors(prev => ({ ...prev, [name]: undefined }));
     
-    if (name === 'price' || name === 'diamonds') {
+    if (name === 'price' || name === 'duration') {
       const numValue = type === 'number' ? parseFloat(value) : null;
       
       if (product === newProduct) {
@@ -259,16 +259,16 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     
     setLoading(true);
     try {
-      const tableName = newProduct.game === 'mlbb' ? 'mlbb_products' : 'freefire_products';
+      const tableName = newProduct.category === 'workouts' ? 'workout_plans' : 'nutrition_plans';
       
       const productData = {
         name: newProduct.name,
-        diamonds: newProduct.diamonds || null,
+        duration: newProduct.duration ?? null,
         price: newProduct.price,
         currency: newProduct.currency,
         type: newProduct.type,
-        image: newProduct.image || null,
-        ...(newProduct.game === 'mlbb' && { code: newProduct.code || null })
+        image: newProduct.image ?? null,
+        ...(newProduct.category === 'workouts' && { code: newProduct.code ?? null })
       };
       
       const { error } = await supabase
@@ -279,11 +279,11 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       
       setNewProduct({
         name: '',
-        diamonds: undefined,
+        duration: undefined,
         price: 0,
         currency: 'USD',
-        type: 'diamonds',
-        game: newProduct.game,
+        type: 'beginner',
+        category: newProduct.category,
         image: '',
         code: ''
       });
@@ -291,10 +291,10 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       setShowAddForm(false);
       await fetchData();
       
-      alert('Product added successfully!');
+      alert('Plan added successfully!');
     } catch (error) {
-      console.error('Error adding product:', error);
-      alert('Failed to add product. Please try again.');
+      console.error('Error adding plan:', error);
+      alert('Failed to add plan. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -309,17 +309,17 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     
     setLoading(true);
     try {
-      const tableName = editingProduct.game === 'mlbb' ? 'mlbb_products' : 'freefire_products';
+      const tableName = editingProduct.category === 'workouts' ? 'workout_plans' : 'nutrition_plans';
       
       const productData = {
         name: editingProduct.name,
-        diamonds: editingProduct.diamonds || null,
+        duration: editingProduct.duration ?? null,
         price: editingProduct.price,
         currency: editingProduct.currency,
         type: editingProduct.type,
-        image: editingProduct.image || null,
+        image: editingProduct.image ?? null,
         updated_at: new Date().toISOString(),
-        ...(editingProduct.game === 'mlbb' && { code: editingProduct.code || null })
+        ...(editingProduct.category === 'workouts' && { code: editingProduct.code ?? null })
       };
       
       const { error } = await supabase
@@ -327,29 +327,29 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         .update(productData)
         .eq('id', editingProduct.id);
       
-      if (error) throw new Error(`Failed to update product: ${error.message}`);
+      if (error) throw new Error(`Failed to update plan: ${error.message}`);
       
       setEditingProduct(null);
       setShowEditForm(false);
       await fetchData();
       
-      alert('Product updated successfully!');
+      alert('Plan updated successfully!');
     } catch (error) {
-      console.error('Error updating product:', error);
-      alert(error instanceof Error ? error.message : 'Failed to update product. Please try again.');
+      console.error('Error updating plan:', error);
+      alert(error instanceof Error ? error.message : 'Failed to update plan. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteProduct = async (product: GameProduct) => {
+  const handleDeleteProduct = async (product: FitnessProduct) => {
     if (!confirm(`Are you sure you want to delete ${product.name}?`)) {
       return;
     }
     
     setLoading(true);
     try {
-      const tableName = product.game === 'mlbb' ? 'mlbb_products' : 'freefire_products';
+      const tableName = product.category === 'workouts' ? 'workout_plans' : 'nutrition_plans';
       
       const { error } = await supabase
         .from(tableName)
@@ -360,10 +360,10 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       
       await fetchData();
       
-      alert('Product deleted successfully!');
+      alert('Plan deleted successfully!');
     } catch (error) {
-      console.error('Error deleting product:', error);
-      alert('Failed to delete product. Please try again.');
+      console.error('Error deleting plan:', error);
+      alert('Failed to delete plan. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -372,8 +372,10 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   // Handle banner file selection
   const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
+    if (file && file.type.startsWith('image/') && file.size <= 5 * 1024 * 1024) {
       setBannerFile(file);
+    } else {
+      alert('Please select a valid image file (max 5MB).');
     }
   };
 
@@ -421,7 +423,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     }
   };
 
-  const startEditProduct = (product: GameProduct) => {
+  const startEditProduct = (product: FitnessProduct) => {
     setEditingProduct(product);
     setShowEditForm(true);
     setShowAddForm(false);
@@ -438,11 +440,11 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     setFormErrors({});
     setNewProduct({
       name: '',
-      diamonds: undefined,
+      duration: undefined,
       price: 0,
       currency: 'USD',
-      type: 'diamonds',
-      game: activeTab === 'resellers' || activeTab === 'prices' || activeTab === 'promos' || activeTab === 'settings' || activeTab === 'dashboard' ? 'mlbb' : activeTab,
+      type: 'beginner',
+      category: activeTab === 'trainers' || activeTab === 'prices' || activeTab === 'promos' || activeTab === 'settings' || activeTab === 'dashboard' ? 'workouts' : activeTab,
       image: '',
       code: ''
     });
@@ -511,50 +513,50 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
               </button>
               <button
                 onClick={() => {
-                  setActiveTab('mlbb');
-                  setNewProduct(prev => ({ ...prev, game: 'mlbb' }));
+                  setActiveTab('workouts');
+                  setNewProduct(prev => ({ ...prev, category: 'workouts' }));
                   setShowAddForm(false);
                   setShowEditForm(false);
                 }}
                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
-                  activeTab === 'mlbb'
+                  activeTab === 'workouts'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
                 <ShoppingBag className="w-4 h-4" />
-                Mobile Legends
+                Workout Plans
               </button>
               <button
                 onClick={() => {
-                  setActiveTab('freefire');
-                  setNewProduct(prev => ({ ...prev, game: 'freefire' }));
+                  setActiveTab('nutrition');
+                  setNewProduct(prev => ({ ...prev, category: 'nutrition' }));
                   setShowAddForm(false);
                   setShowEditForm(false);
                 }}
                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
-                  activeTab === 'freefire'
+                  activeTab === 'nutrition'
                     ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 Hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
                 <ShoppingBag className="w-4 h-4" />
-                Free Fire
+                Nutrition Plans
               </button>
               <button
                 onClick={() => {
-                  setActiveTab('resellers');
+                  setActiveTab('trainers');
                   setShowAddForm(false);
                   setShowEditForm(false);
                 }}
                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
-                  activeTab === 'resellers'
+                  activeTab === 'trainers'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
                 <Users className="w-4 h-4" />
-                Resellers
+                Trainers
               </button>
               <button
                 onClick={() => {
@@ -569,7 +571,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                 }`}
               >
                 <DollarSign className="w-4 h-4" />
-                Reseller Prices
+                Trainer Prices
               </button>
               <button
                 onClick={() => {
@@ -612,8 +614,8 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                    <h3 className="text-lg font-medium text-gray-900">Total Resellers</h3>
-                    <p className="text-2xl font-bold text-blue-600">{resellerCount}</p>
+                    <h3 className="text-lg font-medium text-gray-900">Total Trainers</h3>
+                    <p className="text-2xl font-bold text-blue-600">{trainerCount}</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                     <h3 className="text-lg font-medium text-gray-900">Total Users</h3>
@@ -623,14 +625,14 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
 
                 {/* Transactions Per Month */}
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Transactions Per Month</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Subscriptions Per Month</h3>
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-100">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Count</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription Count</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -645,7 +647,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                         ) : (
                           <tr>
                             <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
-                              No transaction data available.
+                              No subscription data available.
                             </td>
                           </tr>
                         )}
@@ -656,13 +658,13 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
 
                 {/* Transactions Per Day (Last 30 Days) */}
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Transactions Per Day (Last 30 Days)</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Subscriptions Per Day (Last 30 Days)</h3>
                   <div className="overflow-x-auto">
                     <table className="min-w-full divide-y divide-gray-200">
                       <thead className="bg-gray-100">
                         <tr>
                           <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Count</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subscription Count</th>
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
@@ -678,7 +680,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                         ) : (
                           <tr>
                             <td colSpan={2} className="px-6 py-4 text-center text-sm text-gray-500">
-                              No transaction data available.
+                              No subscription data available.
                             </td>
                           </tr>
                         )}
@@ -687,13 +689,10 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                   </div>
                 </div>
               </div>
-            ) : activeTab === 'resellers' ? (
-              <ResellerManager />
+            ) : activeTab === 'trainers' ? (
+              <TrainerManager />
             ) : activeTab === 'prices' ? (
-              <ResellerPriceManager 
-                mlbbProducts={mlbbProducts}
-                ffProducts={ffProducts}
-              />
+              <TrainerPriceManager workoutPlans={workoutPlans} nutritionPlans={nutritionPlans} />
             ) : activeTab === 'promos' ? (
               <PromoCodeManager />
             ) : activeTab === 'settings' ? (
@@ -749,32 +748,32 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
               <>
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-semibold text-gray-900">
-                    {activeTab === 'mlbb' ? 'Mobile Legends Products' : 'Free Fire Products'}
+                    {activeTab === 'workouts' ? 'Workout Plans' : 'Nutrition Plans'}
                   </h2>
                   <button
                     onClick={() => {
                       setShowAddForm(true);
                       setShowEditForm(false);
-                      setNewProduct(prev => ({ ...prev, game: activeTab }));
+                      setNewProduct(prev => ({ ...prev, category: activeTab }));
                     }}
                     className="flex items-center gap-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Product
+                    Add Plan
                   </button>
                 </div>
 
                 {loading && !showAddForm && !showEditForm ? (
                   <div className="flex justify-center items-center py-12">
                     <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                    <span className="ml-2 text-gray-600">Loading products...</span>
+                    <span className="ml-2 text-gray-600">Loading plans...</span>
                   </div>
                 ) : (
                   <>
                     {showAddForm && (
                       <div className="bg-gray-50 p-6 rounded-lg mb-6 border border-gray-200">
                         <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-lg font-medium text-gray-900">Add New Product</h3>
+                          <h3 className="text-lg font-medium text-gray-900">Add New Plan</h3>
                           <button
                             onClick={cancelAdd}
                             className="text-gray-500 hover:text-gray-700"
@@ -786,7 +785,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                                Product Name
+                                Plan Name
                               </label>
                               <input
                                 type="text"
@@ -802,7 +801,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                             </div>
                             <div>
                               <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-                                Product Type
+                                Plan Type
                               </label>
                               <select
                                 id="type"
@@ -811,28 +810,28 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                                 onChange={(e) => handleInputChange(e)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                               >
-                                <option value="diamonds">Diamonds</option>
-                                <option value="subscription">Subscription</option>
-                                <option value="special">Special</option>
+                                <option value="beginner">Beginner</option>
+                                <option value="intermediate">Intermediate</option>
+                                <option value="advanced">Advanced</option>
                               </select>
                               {formErrors.type && (
                                 <p className="text-red-500 text-xs mt-1">{formErrors.type}</p>
                               )}
                             </div>
                             <div>
-                              <label htmlFor="diamonds" className="block text-sm font-medium text-gray-700 mb-1">
-                                Diamonds Amount
+                              <label htmlFor="duration" className="block text-sm font-medium text-gray-700 mb-1">
+                                Duration (weeks)
                               </label>
                               <input
                                 type="number"
-                                id="diamonds"
-                                name="diamonds"
-                                value={newProduct.diamonds || ''}
+                                id="duration"
+                                name="duration"
+                                value={newProduct.duration ?? ''}
                                 onChange={(e) => handleInputChange(e)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                               />
-                              {formErrors.diamonds && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.diamonds}</p>
+                              {formErrors.duration && (
+                                <p className="text-red-500 text-xs mt-1">{formErrors.duration}</p>
                               )}
                             </div>
                             <div>
@@ -844,7 +843,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                                 id="price"
                                 name="price"
                                 step="0.01"
-                                value={newProduct.price || ''}
+                                value={newProduct.price ?? ''}
                                 onChange={(e) => handleInputChange(e)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                               />
@@ -876,7 +875,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                                 type="text"
                                 id="image"
                                 name="image"
-                                value={newProduct.image || ''}
+                                value={newProduct.image ?? ''}
                                 onChange={(e) => handleInputChange(e)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                               />
@@ -884,16 +883,16 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                                 <p className="text-red-500 text-xs mt-1">{formErrors.image}</p>
                               )}
                             </div>
-                            {activeTab === 'mlbb' && (
+                            {activeTab === 'workouts' && (
                               <div>
                                 <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">
-                                  Product Code (MLBB only)
+                                  Plan Code (Workouts only)
                                 </label>
                                 <input
                                   type="text"
                                   id="code"
                                   name="code"
-                                  value={newProduct.code || ''}
+                                  value={newProduct.code ?? ''}
                                   onChange={(e) => handleInputChange(e)}
                                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                                 />
@@ -921,7 +920,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                               ) : (
                                 <>
                                   <Save className="w-4 h-4" />
-                                  Save Product
+                                  Save Plan
                                 </>
                               )}
                             </button>
@@ -933,7 +932,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                     {showEditForm && editingProduct && (
                       <div className="bg-gray-50 p-6 rounded-lg mb-6 border border-gray-200">
                         <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-lg font-medium text-gray-900">Edit Product</h3>
+                          <h3 className="text-lg font-medium text-gray-900">Edit Plan</h3>
                           <button
                             onClick={cancelEdit}
                             className="text-gray-500 hover:text-gray-700"
@@ -945,7 +944,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                               <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-1">
-                                Product Name
+                                Plan Name
                               </label>
                               <input
                                 type="text"
@@ -961,7 +960,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                             </div>
                             <div>
                               <label htmlFor="edit-type" className="block text-sm font-medium text-gray-700 mb-1">
-                                Product Type
+                                Plan Type
                               </label>
                               <select
                                 id="edit-type"
@@ -970,28 +969,28 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                                 onChange={(e) => handleInputChange(e, editingProduct)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                               >
-                                <option value="diamonds">Diamonds</option>
-                                <option value="subscription">Subscription</option>
-                                <option value="special">Special</option>
+                                <option value="beginner">Beginner</option>
+                                <option value="intermediate">Intermediate</option>
+                                <option value="advanced">Advanced</option>
                               </select>
                               {formErrors.type && (
                                 <p className="text-red-500 text-xs mt-1">{formErrors.type}</p>
                               )}
                             </div>
                             <div>
-                              <label htmlFor="edit-diamonds" className="block text-sm font-medium text-gray-700 mb-1">
-                                Diamonds Amount
+                              <label htmlFor="edit-duration" className="block text-sm font-medium text-gray-700 mb-1">
+                                Duration (weeks)
                               </label>
                               <input
                                 type="number"
-                                id="edit-diamonds"
-                                name="diamonds"
-                                value={editingProduct.diamonds || ''}
+                                id="edit-duration"
+                                name="duration"
+                                value={editingProduct.duration ?? ''}
                                 onChange={(e) => handleInputChange(e, editingProduct)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                               />
-                              {formErrors.diamonds && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.diamonds}</p>
+                              {formErrors.duration && (
+                                <p className="text-red-500 text-xs mt-1">{formErrors.duration}</p>
                               )}
                             </div>
                             <div>
@@ -1003,7 +1002,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                                 id="edit-price"
                                 name="price"
                                 step="0.01"
-                                value={editingProduct.price || ''}
+                                value={editingProduct.price ?? ''}
                                 onChange={(e) => handleInputChange(e, editingProduct)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                               />
@@ -1035,7 +1034,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                                 type="text"
                                 id="edit-image"
                                 name="image"
-                                value={editingProduct.image || ''}
+                                value={editingProduct.image ?? ''}
                                 onChange={(e) => handleInputChange(e, editingProduct)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                               />
@@ -1043,16 +1042,16 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                                 <p className="text-red-500 text-xs mt-1">{formErrors.image}</p>
                               )}
                             </div>
-                            {editingProduct.game === 'mlbb' && (
+                            {editingProduct.category === 'workouts' && (
                               <div>
                                 <label htmlFor="edit-code" className="block text-sm font-medium text-gray-700 mb-1">
-                                  Product Code (MLBB only)
+                                  Plan Code (Workouts only)
                                 </label>
                                 <input
                                   type="text"
                                   id="edit-code"
                                   name="code"
-                                  value={editingProduct.code || ''}
+                                  value={editingProduct.code ?? ''}
                                   onChange={(e) => handleInputChange(e, editingProduct)}
                                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                                 />
@@ -1080,7 +1079,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                               ) : (
                                 <>
                                   <Save className="w-4 h-4" />
-                                  Update Product
+                                  Update Plan
                                 </>
                               )}
                             </button>
@@ -1097,18 +1096,18 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                               ID
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Product
+                              Plan
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Type
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Diamonds
+                              Duration (weeks)
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Price
                             </th>
-                            {activeTab === 'mlbb' && (
+                            {activeTab === 'workouts' && (
                               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Code
                               </th>
@@ -1119,7 +1118,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {(activeTab === 'mlbb' ? mlbbProducts : ffProducts).map((product) => (
+                          {(activeTab === 'workouts' ? workoutPlans : nutritionPlans).map((product) => (
                             <tr key={product.id} className="hover:bg-gray-50">
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {product.id}
@@ -1140,9 +1139,9 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                  product.type === 'diamonds'
+                                  product.type === 'beginner'
                                     ? 'bg-blue-100 text-blue-800'
-                                    : product.type === 'subscription'
+                                    : product.type === 'intermediate'
                                     ? 'bg-green-100 text-green-800'
                                     : 'bg-purple-100 text-purple-800'
                                 }`}>
@@ -1150,14 +1149,14 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {product.diamonds || '-'}
+                                {product.duration ?? '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {product.currency} {product.price.toFixed(2)}
                               </td>
-                              {activeTab === 'mlbb' && (
+                              {activeTab === 'workouts' && (
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {product.code || '-'}
+                                  {product.code ?? '-'}
                                 </td>
                               )}
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -1178,10 +1177,10 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                               </td>
                             </tr>
                           ))}
-                          {(activeTab === 'mlbb' ? mlbbProducts.length === 0 : ffProducts.length === 0) && !loading && (
+                          {(activeTab === 'workouts' ? workoutPlans.length === 0 : nutritionPlans.length === 0) && !loading && (
                             <tr>
-                              <td colSpan={activeTab === 'mlbb' ? 7 : 6} className="px-6 py-4 text-center text-sm text-gray-500">
-                                No products found. Add some products to get started.
+                              <td colSpan={activeTab === 'workouts' ? 7 : 6} className="px-6 py-4 text-center text-sm text-gray-500">
+                                No plans found. Add some plans to get started.
                               </td>
                             </tr>
                           )}
