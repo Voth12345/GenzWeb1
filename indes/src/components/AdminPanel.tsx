@@ -1,10 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { GameProduct, Reseller, ResellerPrice } from '../types';
-import { Loader2, Plus, Trash, Edit, Save, X, LogOut, RefreshCw, Users, ShoppingBag, Settings, DollarSign, Tag } from 'lucide-react';
+import { Loader2, Plus, Trash, Edit, Save, X, LogOut, RefreshCw, Users, ShoppingBag, Settings, DollarSign, Tag, Image as ImageIcon, BarChart2 } from 'lucide-react';
 import { ResellerManager } from './ResellerManager';
 import { ResellerPriceManager } from './ResellerPriceManager';
 import { PromoCodeManager } from './PromoCodeManager';
+
+// Interface for transaction metrics
+interface TransactionMetric {
+  year: number;
+  month: number;
+  day?: number;
+  count: number;
+}
 
 interface AdminPanelProps {
   onLogout: () => void;
@@ -13,12 +21,19 @@ interface AdminPanelProps {
 export function AdminPanel({ onLogout }: AdminPanelProps) {
   const [mlbbProducts, setMlbbProducts] = useState<GameProduct[]>([]);
   const [ffProducts, setFfProducts] = useState<GameProduct[]>([]);
+  const [logoBanner, setLogoBanner] = useState<string | null>(null);
+  const [transactionsPerMonth, setTransactionsPerMonth] = useState<TransactionMetric[]>([]);
+  const [transactionsPerDay, setTransactionsPerDay] = useState<TransactionMetric[]>([]);
+  const [resellerCount, setResellerCount] = useState<number>(0);
+  const [userCount, setUserCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'mlbb' | 'freefire' | 'resellers' | 'prices' | 'promos'>('mlbb');
+  const [activeTab, setActiveTab] = useState<'mlbb' | 'freefire' | 'resellers' | 'prices' | 'promos' | 'settings' | 'dashboard'>('dashboard');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
   const [refreshing, setRefreshing] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
   
   // New product form state
   const [newProduct, setNewProduct] = useState<Partial<GameProduct>>({
@@ -35,7 +50,8 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   // Editing product state
   const [editingProduct, setEditingProduct] = useState<GameProduct | null>(null);
 
-  const fetchProducts = useCallback(async () => {
+  // Fetch all data
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       // Fetch MLBB products
@@ -43,18 +59,50 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         .from('mlbb_products')
         .select('*')
         .order('id', { ascending: true });
-      
       if (mlbbError) throw mlbbError;
-      
+
       // Fetch Free Fire products
       const { data: ffData, error: ffError } = await supabase
         .from('freefire_products')
         .select('*')
         .order('id', { ascending: true });
-      
       if (ffError) throw ffError;
-      
-      // Transform the data to match the GameProduct interface
+
+      // Fetch logo banner
+      const { data: settingsData, error: settingsError } = await supabase
+        .from('settings')
+        .select('value')
+        .eq('key', 'logo_banner')
+        .single();
+      if (settingsError && settingsError.code !== 'PGRST116') throw settingsError;
+
+      // Fetch transactions per month
+      const { data: monthlyTxData, error: monthlyTxError } = await supabase
+        .from('transactions')
+        .select('created_at')
+        .gte('created_at', '2024-01-01');
+      if (monthlyTxError) throw monthlyTxError;
+
+      // Fetch transactions per day (last 30 days)
+      const { data: dailyTxData, error: dailyTxError } = await supabase
+        .from('transactions')
+        .select('created_at')
+        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+      if (dailyTxError) throw dailyTxError;
+
+      // Fetch reseller count
+      const { count: resellerCountData, error: resellerCountError } = await supabase
+        .from('resellers')
+        .select('*', { count: 'exact', head: true });
+      if (resellerCountError) throw resellerCountError;
+
+      // Fetch user count
+      const { count: userCountData, error: userCountError } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true });
+      if (userCountError) throw userCountError;
+
+      // Transform product data
       const transformedMlbbProducts: GameProduct[] = mlbbData.map(product => ({
         id: product.id,
         name: product.name,
@@ -66,7 +114,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         image: product.image || undefined,
         code: product.code || undefined
       }));
-      
+
       const transformedFfProducts: GameProduct[] = ffData.map(product => ({
         id: product.id,
         name: product.name,
@@ -77,27 +125,63 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         game: 'freefire',
         image: product.image || undefined
       }));
-      
+
+      // Transform transaction data
+      const monthlyCounts: { [key: string]: number } = {};
+      monthlyTxData.forEach(row => {
+        const date = new Date(row.created_at);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1; // JavaScript months are 0-based
+        const key = `${year}-${month}`;
+        monthlyCounts[key] = (monthlyCounts[key] || 0) + 1;
+      });
+
+      const transformedMonthlyTx: TransactionMetric[] = Object.entries(monthlyCounts).map(([key, count]) => {
+        const [year, month] = key.split('-').map(Number);
+        return { year, month, count };
+      }).sort((a, b) => a.year - b.year || a.month - b.month);
+
+      const dailyCounts: { [key: string]: number } = {};
+      dailyTxData.forEach(row => {
+        const date = new Date(row.created_at);
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1;
+        const day = date.getDate();
+        const key = `${year}-${month}-${day}`;
+        dailyCounts[key] = (dailyCounts[key] || 0) + 1;
+      });
+
+      const transformedDailyTx: TransactionMetric[] = Object.entries(dailyCounts).map(([key, count]) => {
+        const [year, month, day] = key.split('-').map(Number);
+        return { year, month, day, count };
+      }).sort((a, b) => a.year - b.year || a.month - b.month || (a.day! - b.day!));
+
       setMlbbProducts(transformedMlbbProducts);
       setFfProducts(transformedFfProducts);
+      setLogoBanner(settingsData?.value || null);
+      setTransactionsPerMonth(transformedMonthlyTx);
+      setTransactionsPerDay(transformedDailyTx);
+      setResellerCount(resellerCountData || 0);
+      setUserCount(userCountData || 0);
     } catch (error) {
-      console.error('Error fetching products:', error);
-      alert('Failed to load products. Please try again.');
+      console.error('Error fetching data:', error);
+      alert('Failed to load data. Please try again.');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    fetchData();
+  }, [fetchData]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchProducts();
+    await fetchData();
     setRefreshing(false);
   };
 
+  // Validate product form
   const validateForm = (product: Partial<GameProduct>): boolean => {
     const errors: {[key: string]: string} = {};
     
@@ -135,10 +219,8 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   ) => {
     const { name, value, type } = e.target;
     
-    // Clear the error for this field
     setFormErrors(prev => ({ ...prev, [name]: undefined }));
     
-    // Handle numeric inputs
     if (name === 'price' || name === 'diamonds') {
       const numValue = type === 'number' ? parseFloat(value) : null;
       
@@ -154,7 +236,6 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         }));
       }
     } else {
-      // Handle other inputs
       if (product === newProduct) {
         setNewProduct(prev => ({
           ...prev,
@@ -178,10 +259,8 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     
     setLoading(true);
     try {
-      // Determine which table to insert into based on the game
       const tableName = newProduct.game === 'mlbb' ? 'mlbb_products' : 'freefire_products';
       
-      // Prepare the data for insertion
       const productData = {
         name: newProduct.name,
         diamonds: newProduct.diamonds || null,
@@ -192,27 +271,25 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         ...(newProduct.game === 'mlbb' && { code: newProduct.code || null })
       };
       
-      // Insert the new product
       const { error } = await supabase
         .from(tableName)
         .insert([productData]);
       
       if (error) throw error;
       
-      // Reset the form and refresh products
       setNewProduct({
         name: '',
         diamonds: undefined,
         price: 0,
         currency: 'USD',
         type: 'diamonds',
-        game: newProduct.game, // Keep the current game selection
+        game: newProduct.game,
         image: '',
         code: ''
       });
       
       setShowAddForm(false);
-      await fetchProducts();
+      await fetchData();
       
       alert('Product added successfully!');
     } catch (error) {
@@ -232,10 +309,8 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     
     setLoading(true);
     try {
-      // Determine which table to update based on the game
       const tableName = editingProduct.game === 'mlbb' ? 'mlbb_products' : 'freefire_products';
       
-      // Prepare the data for update
       const productData = {
         name: editingProduct.name,
         diamonds: editingProduct.diamonds || null,
@@ -247,21 +322,16 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
         ...(editingProduct.game === 'mlbb' && { code: editingProduct.code || null })
       };
       
-      // Update the product
       const { error } = await supabase
         .from(tableName)
         .update(productData)
         .eq('id', editingProduct.id);
       
-      if (error) {
-        console.error('Update error:', error);
-        throw new Error(`Failed to update product: ${error.message}`);
-      }
+      if (error) throw new Error(`Failed to update product: ${error.message}`);
       
-      // Reset the form and refresh products
       setEditingProduct(null);
       setShowEditForm(false);
-      await fetchProducts();
+      await fetchData();
       
       alert('Product updated successfully!');
     } catch (error) {
@@ -279,10 +349,8 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     
     setLoading(true);
     try {
-      // Determine which table to delete from based on the game
       const tableName = product.game === 'mlbb' ? 'mlbb_products' : 'freefire_products';
       
-      // Delete the product
       const { error } = await supabase
         .from(tableName)
         .delete()
@@ -290,8 +358,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       
       if (error) throw error;
       
-      // Refresh products
-      await fetchProducts();
+      await fetchData();
       
       alert('Product deleted successfully!');
     } catch (error) {
@@ -299,6 +366,58 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       alert('Failed to delete product. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle banner file selection
+  const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBannerFile(file);
+    }
+  };
+
+  // Handle banner upload
+  const handleUploadBanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!bannerFile) {
+      alert('Please select an image file.');
+      return;
+    }
+    
+    setUploadingBanner(true);
+    try {
+      const fileExt = bannerFile.name.split('.').pop();
+      const fileName = `logo_banner_${Date.now()}.${fileExt}`;
+      const filePath = `branding/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('branding')
+        .upload(filePath, bannerFile);
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: urlData } = supabase.storage
+        .from('branding')
+        .getPublicUrl(filePath);
+      
+      if (!urlData?.publicUrl) throw new Error('Failed to get public URL');
+      
+      const { error: settingsError } = await supabase
+        .from('settings')
+        .upsert({ key: 'logo_banner', value: urlData.publicUrl }, { onConflict: 'key' });
+      
+      if (settingsError) throw settingsError;
+      
+      setLogoBanner(urlData.publicUrl);
+      setBannerFile(null);
+      alert('Logo banner updated successfully!');
+    } catch (error) {
+      console.error('Error uploading banner:', error);
+      alert('Failed to upload banner. Please try again.');
+    } finally {
+      setUploadingBanner(false);
     }
   };
 
@@ -323,7 +442,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       price: 0,
       currency: 'USD',
       type: 'diamonds',
-      game: activeTab === 'resellers' || activeTab === 'prices' || activeTab === 'promos' ? 'mlbb' : activeTab,
+      game: activeTab === 'resellers' || activeTab === 'prices' || activeTab === 'promos' || activeTab === 'settings' || activeTab === 'dashboard' ? 'mlbb' : activeTab,
       image: '',
       code: ''
     });
@@ -334,7 +453,15 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       <header className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center">
-            <h1 className="text-2xl font-bold text-gray-900"> Admin</h1>
+            {logoBanner ? (
+              <img
+                src={logoBanner}
+                alt="Logo Banner"
+                className="h-12 w-auto mr-4 object-contain"
+              />
+            ) : (
+              <h1 className="text-2xl font-bold text-gray-900">Admin</h1>
+            )}
             <span className="ml-4 px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
               Logged In
             </span>
@@ -369,6 +496,21 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
             <nav className="flex -mb-px">
               <button
                 onClick={() => {
+                  setActiveTab('dashboard');
+                  setShowAddForm(false);
+                  setShowEditForm(false);
+                }}
+                className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
+                  activeTab === 'dashboard'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <BarChart2 className="w-4 h-4" />
+                Dashboard
+              </button>
+              <button
+                onClick={() => {
                   setActiveTab('mlbb');
                   setNewProduct(prev => ({ ...prev, game: 'mlbb' }));
                   setShowAddForm(false);
@@ -393,7 +535,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
                   activeTab === 'freefire'
                     ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-gray-500 Hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
                 <ShoppingBag className="w-4 h-4" />
@@ -444,11 +586,108 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                 <Tag className="w-4 h-4" />
                 Promo Codes
               </button>
+              <button
+                onClick={() => {
+                  setActiveTab('settings');
+                  setShowAddForm(false);
+                  setShowEditForm(false);
+                }}
+                className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
+                  activeTab === 'settings'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                <Settings className="w-4 h-4" />
+                Settings
+              </button>
             </nav>
           </div>
 
           <div className="p-6">
-            {activeTab === 'resellers' ? (
+            {activeTab === 'dashboard' ? (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-gray-900">Dashboard</h2>
+                
+                {/* Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 className="text-lg font-medium text-gray-900">Total Resellers</h3>
+                    <p className="text-2xl font-bold text-blue-600">{resellerCount}</p>
+                  </div>
+                  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h3 className="text-lg font-medium text-gray-900">Total Users</h3>
+                    <p className="text-2xl font-bold text-blue-600">{userCount}</p>
+                  </div>
+                </div>
+
+                {/* Transactions Per Month */}
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Transactions Per Month</h3>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Count</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {transactionsPerMonth.length > 0 ? (
+                          transactionsPerMonth.map((tx, index) => (
+                            <tr key={index}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tx.year}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tx.month}</td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tx.count}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
+                              No transaction data available.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Transactions Per Day (Last 30 Days) */}
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Transactions Per Day (Last 30 Days)</h3>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Count</th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {transactionsPerDay.length > 0 ? (
+                          transactionsPerDay.map((tx, index) => (
+                            <tr key={index}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {`${tx.year}-${tx.month.toString().padStart(2, '0')}-${tx.day!.toString().padStart(2, '0')}`}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tx.count}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={2} className="px-6 py-4 text-center text-sm text-gray-500">
+                              No transaction data available.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            ) : activeTab === 'resellers' ? (
               <ResellerManager />
             ) : activeTab === 'prices' ? (
               <ResellerPriceManager 
@@ -457,6 +696,55 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
               />
             ) : activeTab === 'promos' ? (
               <PromoCodeManager />
+            ) : activeTab === 'settings' ? (
+              <div className="space-y-6">
+                <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
+                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Logo Banner</h3>
+                  {logoBanner && (
+                    <div className="mb-4">
+                      <img
+                        src={logoBanner}
+                        alt="Current Logo Banner"
+                        className="h-24 w-auto object-contain rounded-md"
+                      />
+                    </div>
+                  )}
+                  <form onSubmit={handleUploadBanner} className="space-y-4">
+                    <div>
+                      <label htmlFor="banner" className="block text-sm font-medium text-gray-700 mb-1">
+                        Upload New Logo Banner
+                      </label>
+                      <input
+                        type="file"
+                        id="banner"
+                        accept="image/*"
+                        onChange={handleBannerFileChange}
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                      />
+                    </div>
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={uploadingBanner || !bannerFile}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                      >
+                        {uploadingBanner ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <ImageIcon className="w-4 h-4" />
+                            Upload Banner
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
             ) : (
               <>
                 <div className="flex justify-between items-center mb-6">
@@ -740,7 +1028,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                               )}
                             </div>
                             <div>
-                               <label htmlFor="edit-image" className="block text-sm font-medium text-gray-700 mb-1">
+                              <label htmlFor="edit-image" className="block text-sm font-medium text-gray-700 mb-1">
                                 Image URL
                               </label>
                               <input
