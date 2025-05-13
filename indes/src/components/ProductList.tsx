@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { GameProduct } from '../types';
 import { Check, ShoppingCart, Star, Sparkles, Flame, Crown } from 'lucide-react';
+import { Tooltip } from 'react-tooltip'; // Assuming you use a tooltip library like react-tooltip
 
 interface Props {
   products: GameProduct[];
@@ -35,103 +36,104 @@ export function ProductList({ products, selectedProduct, onSelect, onNotify, gam
   // Helper function to get tagname icon
   const getTagIcon = (tagname: string) => {
     const lowercaseTag = tagname.toLowerCase();
-    if (lowercaseTag.includes('hot')) return <Flame className="w-3 h-3" />;
-    if (lowercaseTag.includes('best')) return <Star className="w-3 h-3" />;
-    if (lowercaseTag.includes('new')) return <Sparkles className="w-3 h-3" />;
-    if (lowercaseTag.includes('premium')) return <Crown className="w-3 h-3" />;
+    if (lowercaseTag.includes('hot')) return <Flame className="w-4 h-4" />;
+    if (lowercaseTag.includes('best')) return <Star className="w-4 h-4" />;
+    if (lowercaseTag.includes('new')) return <Sparkles className="w-4 h-4" />;
+    if (lowercaseTag.includes('premium')) return <Crown className="w-4 h-4" />;
     return null;
   };
 
-  const renderProductCard = (product: GameProduct) => (
-    <div
-      key={product.id}
-      onClick={() => {
-        onSelect(product);
-        onNotify(
-          product.diamonds
-            ? `${product.diamonds} Diamonds = ${product.price.toFixed(2)}$`
-            : `${product.name} = ${product.price.toFixed(2)}$`
-        );
-      }}
-      className={`relative rounded-xl cursor-pointer border ${
-        selectedProduct?.id === product.id
-          ? 'border-2 border-blue-500 bg-blue-100/5'
-          : 'border-white/10 bg-white/5'
-      }`}
-    >
-      {/* Tagname badge */}
-      {product.tagname && (
-        <div className="absolute -top-3 left-0 right-0 flex justify-center">
-          <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 whitespace-nowrap text-xs font-bold">
-            {getTagIcon(product.tagname)}
-            <span>{product.tagname.toUpperCase()}</span>
+  const renderProductCard = (product: GameProduct) => {
+    const isSelected = selectedProduct?.id === product.id;
+    const cardClass = `relative rounded-xl cursor-pointer border p-4 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/20 ${
+      isSelected ? 'border-2 border-blue-500 bg-blue-100/10' : 'border-white/10 bg-white/5 hover:bg-white/10'
+    }`;
+
+    return (
+      <div
+        key={product.id}
+        data-tooltip-id={`tooltip-${product.id}`}
+        data-tooltip-content={product.diamonds ? `${product.diamonds} Diamonds` : product.name}
+        data-tooltip-place="top"
+        className={cardClass}
+        onClick={() => {
+          onSelect(product);
+          onNotify(
+            product.diamonds
+              ? `${product.diamonds} Diamonds = $${product.price.toFixed(2)}`
+              : `${product.name} = $${product.price.toFixed(2)}`
+          );
+        }}
+      >
+        {/* Tagname badge */}
+        {product.tagname && (
+          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+            <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full shadow-lg flex items-center gap-1.5 whitespace-nowrap text-xs font-bold animate-pulse-slow">
+              {getTagIcon(product.tagname)}
+              <span>{product.tagname.toUpperCase()}</span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Product content with horizontal layout */}
-      <div className={`p-2 flex flex-row items-center gap-2 ${product.tagname ? 'pt-6' : ''} h-16`}>
-        {/* Product image */}
-        <div className="flex-shrink-0">
-          <img
-            src={product.image || 'https://via.placeholder.com/40'}
-            alt={product.name}
-            className="w-10 h-10 rounded-lg object-cover"
-            loading="lazy"
-          />
-          {selectedProduct?.id === product.id && (
-            <div className="absolute -top-2 -right-2 bg-blue-500 text-blue-900 rounded-full p-1">
-              <Check className="w-3 h-3" />
-            </div>
-          )}
-        </div>
-
-        {/* Product details in a vertical stack */}
-        <div className="text-left space-y-0.5 flex-1 overflow-hidden">
-         <h3 className="font-medium text-xs text-white leading-tight break-words">{product.name}</h3>
-          {product.diamonds && (
-            <div className="flex items-center gap-1">
-            </div>
-          )}
-
-          {/* Price section */}
-          <div className="space-y-0">
-            {product.originalPrice && product.discountApplied && product.discountApplied > 0 ? (
-              <p className="text-[10px] text-gray-400 line-through">
-                ${product.originalPrice.toFixed(2)}
-              </p>
-            ) : null}
-            <p className="text-sm font-bold text-blue-200">
-              ${product.price.toFixed(2)}
-              {product.originalPrice && product.discountApplied && product.discountApplied > 0 && (
-                <span className="text-[10px] text-green-400 ml-1">
-                  (-{product.discountApplied}%)
-                </span>
-              )}
-            </p>
-            {isReseller && product.resellerPrice && (
-              <p className="text-[10px] font-medium text-blue-400/80">
-                Reseller: ${product.resellerPrice.toFixed(2)}
-              </p>
+        {/* Product content with vertical layout for larger cards */}
+        <div className={`flex flex-col items-center justify-center ${product.tagname ? 'pt-6' : ''} h-32`}>
+          {/* Product image */}
+          <div className="relative flex-shrink-0 mb-2">
+            <img
+              src={product.image || 'https://via.placeholder.com/50'}
+              alt={product.name}
+              className="w-16 h-16 rounded-lg object-cover transition-transform duration-300 hover:scale-110"
+              loading="lazy"
+            />
+            {isSelected && (
+              <div className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full p-1">
+                <Check className="w-4 h-4" />
+              </div>
             )}
           </div>
+
+          {/* Product details */}
+          <div className="text-center space-y-1">
+            <h3 className="font-medium text-sm text-white leading-tight break-words line-clamp-2">
+              {product.diamonds ? `${product.diamonds} Diamonds` : product.name}
+            </h3>
+            <div className="space-y-0.5">
+              {product.originalPrice && product.discountApplied && product.discountApplied > 0 && (
+                <p className="text-[10px] text-gray-400 line-through">
+                  ${product.originalPrice.toFixed(2)}
+                </p>
+              )}
+              <p className="text-base font-bold text-blue-200 flex items-center justify-center gap-1">
+                ${product.price.toFixed(2)}
+                {product.originalPrice && product.discountApplied && product.discountApplied > 0 && (
+                  <span className="text-[10px] text-green-400">(-{product.discountApplied}%)</span>
+                )}
+              </p>
+              {isReseller && product.resellerPrice && (
+                <p className="text-xs font-medium text-blue-400/80">
+                  Reseller: ${product.resellerPrice.toFixed(2)}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
+        <Tooltip id={`tooltip-${product.id}`} className="bg-gray-800 text-white text-xs" />
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Special Packages */}
       {groupedProducts.special && (
         <div>
-          <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-            <div className="p-1.5 bg-blue-500/10 rounded-lg">
-              <Sparkles className="w-5 h-5 text-blue-400" />
+          <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <Sparkles className="w-6 h-6 text-blue-400" />
             </div>
             Promotion Packages
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {groupedProducts.special.map(renderProductCard)}
           </div>
         </div>
@@ -140,12 +142,13 @@ export function ProductList({ products, selectedProduct, onSelect, onNotify, gam
       {/* Diamonds Packages */}
       {groupedProducts.diamonds && (
         <div>
-          <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-            <div className="p-1.5 bg-blue-500/10 rounded-lg">
+          <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
+            <div className="p-2 bg-blue-500/10 rounded-lg">
+              <ShoppingCart className="w-6 h-6 text-blue-400" />
             </div>
             Diamond Packages
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {groupedProducts.diamonds.map(renderProductCard)}
           </div>
         </div>
@@ -154,13 +157,13 @@ export function ProductList({ products, selectedProduct, onSelect, onNotify, gam
       {/* Subscription Packages */}
       {groupedProducts.subscription && (
         <div>
-          <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-            <div className="p-1.5 bg-purple-500/10 rounded-lg">
-              <Crown className="w-5 h-5 text-purple-400" />
+          <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-3">
+            <div className="p-2 bg-purple-500/10 rounded-lg">
+              <Crown className="w-6 h-6 text-purple-400" />
             </div>
             Subscription Packages
           </h3>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {groupedProducts.subscription.map(renderProductCard)}
           </div>
         </div>
@@ -169,8 +172,8 @@ export function ProductList({ products, selectedProduct, onSelect, onNotify, gam
       {/* Empty State */}
       {products.length === 0 && (
         <div className="text-center py-12">
-          <div className="bg-white/5 rounded-xl p-8 border border-white/10">
-            <Sparkles className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <div className="bg-white/5 rounded-xl p-6 border border-white/10 shadow-lg">
+            <Sparkles className="w-12 h-12 text-gray-400 mx-auto mb-4 animate-pulse" />
             <p className="text-white text-lg font-medium">
               No products available for {
                 game === 'mlbb' ? 'Mobile Legends' :
