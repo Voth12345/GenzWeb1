@@ -1,4 +1,4 @@
-```tsx
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import { Loader2, Plus, Trash, Edit, Save, X, LogOut, RefreshCw, Users, ShoppingBag, Settings, DollarSign, Tag, Image as ImageIcon, BarChart2 } from 'lucide-react';
@@ -1146,4 +1146,4 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     </ErrorBoundary>
   );
 }
-```
+
