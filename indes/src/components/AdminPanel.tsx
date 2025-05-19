@@ -29,6 +29,189 @@ interface AdminPanelProps {
   onLogout: () => void;
 }
 
+interface ProductFormProps {
+  product: Partial<GameProduct> | GameProduct;
+  onSubmit: (e: React.FormEvent) => void;
+  onCancel: () => void;
+  formErrors: { [key: string]: string };
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  isEditing: boolean;
+  loading: boolean;
+  activeTab: 'mlbb' | 'freefire';
+}
+
+// Reusable ProductForm Component
+const ProductForm: React.FC<ProductFormProps> = ({
+  product,
+  onSubmit,
+  onCancel,
+  formErrors,
+  onInputChange,
+  isEditing,
+  loading,
+  activeTab
+}) => (
+  <div className="bg-gray-50 p-6 rounded-lg mb-6 border border-gray-200">
+    <div className="flex justify-between items-center mb-4">
+      <h3 className="text-lg font-medium text-gray-900">{isEditing ? 'Edit Product' : 'Add New Product'}</h3>
+      <button onClick={onCancel} className="text-gray-500 hover:text-gray-700">
+        <X className="w-5 h-5" />
+      </button>
+    </div>
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label htmlFor={`${isEditing ? 'edit-' : ''}name`} className="block text-sm font-medium text-gray-700 mb-1">
+            Product Name
+          </label>
+          <input
+            type="text"
+            id={`${isEditing ? 'edit-' : ''}name`}
+            name="name"
+            value={product.name || ''}
+            onChange={onInputChange}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            aria-describedby={formErrors.name ? `${isEditing ? 'edit-' : ''}name-error` : undefined}
+          />
+          {formErrors.name && (
+            <p id={`${isEditing ? 'edit-' : ''}name-error`} className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+          )}
+        </div>
+        <div>
+          <label htmlFor={`${isEditing ? 'edit-' : ''}type`} className="block text-sm font-medium text-gray-700 mb-1">
+            Product Type
+          </label>
+          <select
+            id={`${isEditing ? 'edit-' : ''}type`}
+            name="type"
+            value={product.type || 'diamonds'}
+            onChange={onInputChange}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            aria-describedby={formErrors.type ? `${isEditing ? 'edit-' : ''}type-error` : undefined}
+          >
+            <option value="diamonds">Diamonds</option>
+            <option value="subscription">Subscription</option>
+            <option value="special">Special</option>
+          </select>
+          {formErrors.type && (
+            <p id={`${isEditing ? 'edit-' : ''}type-error`} className="text-red-500 text-xs mt-1">{formErrors.type}</p>
+          )}
+        </div>
+        <div>
+          <label htmlFor={`${isEditing ? 'edit-' : ''}diamonds`} className="block text-sm font-medium text-gray-700 mb-1">
+            Diamonds Amount
+          </label>
+          <input
+            type="number"
+            id={`${isEditing ? 'edit-' : ''}diamonds`}
+            name="diamonds"
+            value={product.diamonds ?? ''}
+            onChange={onInputChange}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            aria-describedby={formErrors.diamonds ? `${isEditing ? 'edit-' : ''}diamonds-error` : undefined}
+          />
+          {formErrors.diamonds && (
+            <p id={`${isEditing ? 'edit-' : ''}diamonds-error`} className="text-red-500 text-xs mt-1">{formErrors.diamonds}</p>
+          )}
+        </div>
+        <div>
+          <label htmlFor={`${isEditing ? 'edit-' : ''}price`} className="block text-sm font-medium text-gray-700 mb-1">
+            Price
+          </label>
+          <input
+            type="number"
+            id={`${isEditing ? 'edit-' : ''}price`}
+            name="price"
+            step="0.01"
+            value={product.price ?? ''}
+            onChange={onInputChange}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            aria-describedby={formErrors.price ? `${isEditing ? 'edit-' : ''}price-error` : undefined}
+          />
+          {formErrors.price && (
+            <p id={`${isEditing ? 'edit-' : ''}price-error`} className="text-red-500 text-xs mt-1">{formErrors.price}</p>
+          )}
+        </div>
+        <div>
+          <label htmlFor={`${isEditing ? 'edit-' : ''}currency`} className="block text-sm font-medium text-gray-700 mb-1">
+            Currency
+          </label>
+          <input
+            type="text"
+            id={`${isEditing ? 'edit-' : ''}currency`}
+            name="currency"
+            value={product.currency || ''}
+            onChange={onInputChange}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            aria-describedby={formErrors.currency ? `${isEditing ? 'edit-' : ''}currency-error` : undefined}
+          />
+          {formErrors.currency && (
+            <p id={`${isEditing ? 'edit-' : ''}currency-error`} className="text-red-500 text-xs mt-1">{formErrors.currency}</p>
+          )}
+        </div>
+        <div>
+          <label htmlFor={`${isEditing ? 'edit-' : ''}image`} className="block text-sm font-medium text-gray-700 mb-1">
+            Image URL
+          </label>
+          <input
+            type="text"
+            id={`${isEditing ? 'edit-' : ''}image`}
+            name="image"
+            value={product.image ?? ''}
+            onChange={onInputChange}
+            className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            aria-describedby={formErrors.image ? `${isEditing ? 'edit-' : ''}image-error` : undefined}
+          />
+          {formErrors.image && (
+            <p id={`${isEditing ? 'edit-' : ''}image-error`} className="text-red-500 text-xs mt-1">{formErrors.image}</p>
+          )}
+        </div>
+        {activeTab === 'mlbb' && (
+          <div>
+            <label htmlFor={`${isEditing ? 'edit-' : ''}code`} className="block text-sm font-medium text-gray-700 mb-1">
+              Product Code (MLBB only)
+            </label>
+            <input
+              type="text"
+              id={`${isEditing ? 'edit-' : ''}code`}
+              name="code"
+              value={product.code ?? ''}
+              onChange={onInputChange}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+            />
+          </div>
+        )}
+      </div>
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              {isEditing ? 'Update Product' : 'Save Product'}
+            </>
+          )}
+        </button>
+      </div>
+    </form>
+  </div>
+);
+
 export function AdminPanel({ onLogout }: AdminPanelProps) {
   const [mlbbProducts, setMlbbProducts] = useState<GameProduct[]>([]);
   const [ffProducts, setFfProducts] = useState<GameProduct[]>([]);
@@ -179,7 +362,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   };
 
   // Validate product form
-  const validateForm = (product: Partial<GameProduct>): boolean => {
+  const validateForm = (product: Partial<GameProduct> | GameProduct): boolean => {
     const errors: { [key: string]: string } = {};
 
     if (!product.name?.trim()) {
@@ -211,7 +394,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     product: Partial<GameProduct> | GameProduct = newProduct
   ) => {
     const { name, value, type } = e.target;
@@ -229,7 +412,6 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       setNewProduct(updatedProduct);
     }
 
-    // Validate on change to provide immediate feedback
     validateForm(updatedProduct);
   };
 
@@ -342,7 +524,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
       await fetchData();
 
       alert('Product deleted successfully!');
-    } catch видит error) {
+    } catch (error) {
       console.error('Error deleting product:', error);
       alert(error instanceof Error ? error.message : 'Failed to delete product. Please try again.');
     } finally {
@@ -350,7 +532,6 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     }
   };
 
-  // Handle banner file selection with validation
   const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -368,7 +549,6 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     }
   };
 
-  // Handle banner upload
   const handleUploadBanner = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -612,585 +792,31 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
                   </div>
                 </div>
 
-                {/* Transactions Per Month */}
+                {/* Transactions Per Month Chart */}
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Transactions Per Month</h3>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Count</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {transactionsPerMonth.length > 0 ? (
-                          transactionsPerMonth.map((tx, index) => (
-                            <tr key={index}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tx.year}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tx.month}</td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tx.count}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={3} className="px-6 py-4 text-center text-sm text-gray-500">
-                              No transaction data available.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Transactions Per Day (Last 30 Days) */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Transactions Per Day (Last 30 Days)</h3>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-100">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Transaction Count</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {transactionsPerDay.length > 0 ? (
-                          transactionsPerDay.map((tx, index) => (
-                            <tr key={index}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {`${tx.year}-${tx.month.toString().padStart(2, '0')}-${tx.day!.toString().padStart(2, '0')}`}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{tx.count}</td>
-                            </tr>
-                          ))
-                        ) : (
-                          <tr>
-                            <td colSpan={2} className="px-6 py-4 text-center text-sm text-gray-500">
-                              No transaction data available.
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            ) : activeTab === 'resellers' ? (
-              <ResellerManager />
-            ) : activeTab === 'prices' ? (
-              <ResellerPriceManager mlbbProducts={mlbbProducts} ffProducts={ffProducts} />
-            ) : activeTab === 'promos' ? (
-              <PromoCodeManager />
-            ) : activeTab === 'settings' ? (
-              <div className="space-y-6">
-                <h2 className="text-xl font-semibold text-gray-900">Settings</h2>
-                <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Logo Banner</h3>
-                  {logoBanner && (
-                    <div className="mb-4">
-                      <img
-                        src={logoBanner}
-                        alt="Current Logo Banner"
-                        className="h-24 w-auto object-contain rounded-md"
-                      />
-                    </div>
-                  )}
-                  <form onSubmit={handleUploadBanner} className="space-y-4">
-                    <div>
-                      <label htmlFor="banner" className="block text-sm font-medium text-gray-700 mb-1">
-                        Upload New Logo Banner
-                      </label>
-                      <input
-                        type="file"
-                        id="banner"
-                        accept="image/*"
-                        onChange={handleBannerFileChange}
-                        className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                      />
-                    </div>
-                    <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={uploadingBanner || !bannerFile}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                      >
-                        {uploadingBanner ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Uploading...
-                          </>
-                        ) : (
-                          <>
-                            <ImageIcon className="w-4 h-4" />
-                            Upload Banner
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">
-                    {activeTab === 'mlbb' ? 'Mobile Legends Products' : 'Free Fire Products'}
-                  </h2>
-                  <button
-                    onClick={() => {
-                      setShowAddForm(true);
-                      setShowEditForm(false);
-                      setNewProduct(prev => ({ ...prev, game: activeTab }));
-                    }}
-                    className="flex items-center gap-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
-                  >
-                    <Plus className="w-4 h-4" />
-                    Add Product
-                  </button>
-                </div>
-
-                {loading && !showAddForm && !showEditForm ? (
-                  <div className="flex justify-center items-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-                    <span className="ml-2 text-gray-600">Loading products...</span>
-                  </div>
-                ) : (
-                  <>
-                    {showAddForm && (
-                      <div className="bg-gray-50 p-6 rounded-lg mb-6 border border-gray-200">
-                        <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-lg font-medium text-gray-900">Add New Product</h3>
-                          <button onClick={cancelAdd} className="text-gray-500 hover:text-gray-700">
-                            <X className="w-5 h-5" />
-                          </button>
-                        </div>
-                        <form onSubmit={handleAddProduct} className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                                Product Name
-                              </label>
-                              <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                value={newProduct.name}
-                                onChange={(e) => handleInputChange(e)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                aria-describedby={formErrors.name ? "name-error" : undefined}
-                              />
-                              {formErrors.name && (
-                                <p id="name-error" className="text-red-500 text-xs mt-1">{formErrors.name}</p>
-                              )}
-                            </div>
-                            <div>
-                              <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-1">
-                                Product Type
-                              </label>
-                              <select
-                                id="type"
-                                name="type"
-                                value={newProduct.type}
-                                onChange={(e) => handleInputChange(e)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                aria-describedby={formErrors.type ? "type-error" : undefined}
-                              >
-                                <option value="diamonds">Diamonds</option>
-                                <option value="subscription">Subscription</option>
-                                <option value="special">Special</option>
-                              </select>
-                              {formErrors.type && (
-                                <p id="type-error" className="text-red-500 text-xs mt-1">{formErrors.type}</p>
-                              )}
-                            </div>
-                            <div>
-                              <label htmlFor="diamonds" className="block text-sm font-medium text-gray-700 mb-1">
-                                Diamonds Amount
-                              </label>
-                              <input
-                                type="number"
-                                id="diamonds"
-                                name="diamonds"
-                                value={newProduct.diamonds ?? ''}
-                                onChange={(e) => handleInputChange(e)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                aria-describedby={formErrors.diamonds ? "diamonds-error" : undefined}
-                              />
-                              {formErrors.diamonds && (
-                                <p id="diamonds-error" className="text-red-500 text-xs mt-1">{formErrors.diamonds}</p>
-                              )}
-                            </div>
-                            <div>
-                              <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-                                Price
-                              </label>
-                              <input
-                                type="number"
-                                id="price"
-                                name="price"
-                                step="0.01"
-                                value={newProduct.price ?? ''}
-                                onChange={(e) => handleInputChange(e)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                aria-describedby={formErrors.price ? "price-error" : undefined}
-                              />
-                              {formErrors.price && (
-                                <p id="price-error" className="text-red-500 text-xs mt-1">{formErrors.price}</p>
-                              )}
-                            </div>
-                            <div>
-                              <label htmlFor="currency" className="block text-sm font-medium text-gray-700 mb-1">
-                                Currency
-                              </label>
-                              <input
-                                type="text"
-                                id="currency"
-                                name="currency"
-                                value={newProduct.currency}
-                                onChange={(e) => handleInputChange(e)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                aria-describedby={formErrors.currency ? "currency-error" : undefined}
-                              />
-                              {formErrors.currency && (
-                                <p id="currency-error" className="text-red-500 text-xs mt-1">{formErrors.currency}</p>
-                              )}
-                            </div>
-                            <div>
-                              <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
-                                Image URL
-                              </label>
-                              <input
-                                type="text"
-                                id="image"
-                                name="image"
-                                value={newProduct.image ?? ''}
-                                onChange={(e) => handleInputChange(e)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                aria-describedby={formErrors.image ? "image-error" : undefined}
-                              />
-                              {formErrors.image && (
-                                <p id="image-error" className="text-red-500 text-xs mt-1">{formErrors.image}</p>
-                              )}
-                            </div>
-                            {activeTab === 'mlbb' && (
-                              <div>
-                                <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">
-                                  Product Code (MLBB only)
-                                </label>
-                                <input
-                                  type="text"
-                                  id="code"
-                                  name="code"
-                                  value={newProduct.code ?? ''}
-                                  onChange={(e) => handleInputChange(e)}
-                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={cancelAdd}
-                              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              type="submit"
-                              disabled={loading}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                            >
-                              {loading ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                  Saving...
-                                </>
-                              ) : (
-                                <>
-                                  <Save className="w-4 h-4" />
-                                  Save Product
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        </form>
-                      </div>
-                    )}
-
-                    {showEditForm && editingProduct && (
-                      <div className="bg-gray-50 p-6 rounded-lg mb-6 border border-gray-200">
-                        <div className="flex justify-between items-center mb-4">
-                          <h3 className="text-lg font-medium text-gray-900">Edit Product</h3>
-                          <button onClick={cancelEdit} className="text-gray-500 hover:text-gray-700">
-                            <X className="w-5 h-5" />
-                          </button>
-                        </div>
-                        <form onSubmit={handleEditProduct} className="space-y-4">
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <label htmlFor="edit-name" className="block text-sm font-medium text-gray-700 mb-1">
-                                Product Name
-                              </label>
-                              <input
-                                type="text"
-                                id="edit-name"
-                                name="name"
-                                value={editingProduct.name}
-                                onChange={(e) => handleInputChange(e, editingProduct)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                aria-describedby={formErrors.name ? "edit-name-error" : undefined}
-                              />
-                              {formErrors.name && (
-                                <p id="edit-name-error" className="text-red-500 text-xs mt-1">{formErrors.name}</p>
-                              )}
-                            </div>
-                            <div>
-                              <label htmlFor="edit-type" className="block text-sm font-medium text-gray-700 mb-1">
-                                Product Type
-                              </label>
-                              <select
-                                id="edit-type"
-                                name="type"
-                                value={editingProduct.type}
-                                onChange={(e) => handleInputChange(e, editingProduct)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                aria-describedby={formErrors.type ? "edit-type-error" : undefined}
-                              >
-                                <option value="diamonds">Diamonds</option>
-                                <option value="subscription">Subscription</option>
-                                <option value="special">Special</option>
-                              </select>
-                              {formErrors.type && (
-                                <p id="edit-type-error" className="text-red-500 text-xs mt-1">{formErrors.type}</p>
-                              )}
-                            </div>
-                            <div>
-                              <label htmlFor="edit-diamonds" className="block text-sm font-medium text-gray-700 mb-1">
-                                Diamonds Amount
-                              </label>
-                              <input
-                                type="number"
-                                id="edit-diamonds"
-                                name="diamonds"
-                                value={editingProduct.diamonds ?? ''}
-                                onChange={(e) => handleInputChange(e, editingProduct)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                aria-describedby={formErrors.diamonds ? "edit-diamonds-error" : undefined}
-                              />
-                              {formErrors.diamonds && (
-                                <p id="edit-diamonds-error" className="text-red-500 text-xs mt-1">{formErrors.diamonds}</p>
-                              )}
-                            </div>
-                            <div>
-                              <label htmlFor="edit-price" className="block text-sm font-medium text-gray-700 mb-1">
-                                Price
-                              </label>
-                              <input
-                                type="number"
-                                id="edit-price"
-                                name="price"
-                                step="0.01"
-                                value={editingProduct.price ?? ''}
-                                onChange={(e) => handleInputChange(e, editingProduct)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                aria-describedby={formErrors.price ? "edit-price-error" : undefined}
-                              />
-                              {formErrors.price && (
-                                <p id="edit-price-error" className="text-red-500 text-xs mt-1">{formErrors.price}</p>
-                              )}
-                            </div>
-                            <div>
-                              <label htmlFor="edit-currency" className="block text-sm font-medium text-gray-700 mb-1">
-                                Currency
-                              </label>
-                              <input
-                                type="text"
-                                id="edit-currency"
-                                name="currency"
-                                value={editingProduct.currency}
-                                onChange={(e) => handleInputChange(e, editingProduct)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                aria-describedby={formErrors.currency ? "edit-currency-error" : undefined}
-                              />
-                              {formErrors.currency && (
-                                <p id="edit-currency-error" className="text-red-500 text-xs mt-1">{formErrors.currency}</p>
-                              )}
-                            </div>
-                            <div>
-                              <label htmlFor="edit-image" className="block text-sm font-medium text-gray-700 mb-1">
-                                Image URL
-                              </label>
-                              <input
-                                type="text"
-                                id="edit-image"
-                                name="image"
-                                value={editingProduct.image ?? ''}
-                                onChange={(e) => handleInputChange(e, editingProduct)}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                aria-describedby={formErrors.image ? "edit-image-error" : undefined}
-                              />
-                              {formErrors.image && (
-                                <p id="edit-image-error" className="text-red-500 text-xs mt-1">{formErrors.image}</p>
-                              )}
-                            </div>
-                            {editingProduct.game === 'mlbb' && (
-                              <div>
-                                <label htmlFor="edit-code" className="block text-sm font-medium text-gray-700 mb-1">
-                                  Product Code (MLBB only)
-                                </label>
-                                <input
-                                  type="text"
-                                  id="edit-code"
-                                  name="code"
-                                  value={editingProduct.code ?? ''}
-                                  onChange={(e) => handleInputChange(e, editingProduct)}
-                                  className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                                />
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex justify-end gap-2">
-                            <button
-                              type="button"
-                              onClick={cancelEdit}
-                              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              type="submit"
-                              disabled={loading}
-                              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                            >
-                              {loading ? (
-                                <>
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                  Saving...
-                                </>
-                              ) : (
-                                <>
-                                  <Save className="w-4 h-4" />
-                                  Update Product
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        </form>
-                      </div>
-                    )}
-
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                          <tr>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              ID
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Product
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Type
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Diamonds
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Price
-                            </th>
-                            {activeTab === 'mlbb' && (
-                              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Code
-                              </th>
-                            )}
-                            <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Actions
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {(activeTab === 'mlbb' ? mlbbProducts : ffProducts).map((product) => (
-                            <tr key={product.id} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {product.id}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  {product.image && (
-                                    <img
-                                      src={product.image}
-                                      alt={product.name}
-                                      className="w-10 h-10 rounded-md mr-3 object-cover"
-                                    />
-                                  )}
-                                  <div>
-                                    <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <span
-                                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                    product.type === 'diamonds'
-                                      ? 'bg-blue-100 text-blue-800'
-                                      : product.type === 'subscription'
-                                      ? 'bg-green-100 text-green-800'
-                                      : 'bg-purple-100 text-purple-800'
-                                  }`}
-                                >
-                                  {product.type}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {product.diamonds ?? '-'}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {product.currency} {product.price.toFixed(2)}
-                              </td>
-                              {activeTab === 'mlbb' && (
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {product.code || '-'}
-                                </td>
-                              )}
-                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div className="flex justify-end gap-2">
-                                  <button
-                                    onClick={() => startEditProduct(product)}
-                                    className="text-blue-600 hover:text-blue-900"
-                                  >
-                                    <Edit className="w-5 h-5" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteProduct(product)}
-                                    className="text-red-600 hover:text-red-900"
-                                  >
-                                    <Trash className="w-5 h-5" />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                          {(activeTab === 'mlbb' ? mlbbProducts.length === 0 : ffProducts.length === 0) && !loading && (
-                            <tr>
-                              <td colSpan={activeTab === 'mlbb' ? 7 : 6} className="px-6 py-4 text-center text-sm text-gray-500">
-                                No products found. Add some products to get started.
-                              </td>
-                            </tr>
-                          )}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-}
+                  {transactionsPerMonth.length > 0 ? (
+                    <div className="h-64">
+                      ```chartjs
+                      {
+                        type: 'line',
+                        data: {
+                          labels: transactionsPerMonth.map(tx => `${tx.year}-${tx.month.toString().padStart(2, '0')}`),
+                          datasets: [{
+                            label: 'Transactions Per Month',
+                            data: transactionsPerMonth.map(tx => tx.count),
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                            fill: true,
+                            tension: 0.4
+                          }]
+                        },
+                        options: {
+                          responsive: true,
+                          maintainAspectRatio: false,
+                          scales: {
+                            x: { title: { display: true, text: 'Month' } },
+                            y: { title: { display: true, text: 'Transaction Count' }, beginAtZero: true }
+                          }
+                        }
+                      }
