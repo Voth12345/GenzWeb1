@@ -1,13 +1,23 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { GameProduct, Reseller, ResellerPrice } from '../types';
 import { Loader2, Plus, Trash, Edit, Save, X, LogOut, RefreshCw, Users, ShoppingBag, Settings, DollarSign, Tag, Image as ImageIcon, BarChart2 } from 'lucide-react';
 import { ResellerManager } from './ResellerManager';
 import { ResellerPriceManager } from './ResellerPriceManager';
 import { PromoCodeManager } from './PromoCodeManager';
 
-// Interface for transaction metrics
+// Interfaces
+interface GameProduct {
+  id: number;
+  name: string;
+  diamonds?: number | null;
+  price: number;
+  currency: string;
+  type: 'diamonds' | 'subscription' | 'special';
+  game: 'mlbb' | 'freefire';
+  image?: string | null;
+  code?: string | null;
+}
+
 interface TransactionMetric {
   year: number;
   month: number;
@@ -31,15 +41,15 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<'mlbb' | 'freefire' | 'resellers' | 'prices' | 'promos' | 'settings' | 'dashboard'>('dashboard');
   const [showAddForm, setShowAddForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
-  const [formErrors, setFormErrors] = useState<{[key: string]: string}>({});
+  const [formErrors, setFormErrors] = useState<{ [key: string]: string }>({});
   const [refreshing, setRefreshing] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
-  
+
   // New product form state
   const [newProduct, setNewProduct] = useState<Partial<GameProduct>>({
     name: '',
-    diamonds: undefined,
+    diamonds: null,
     price: 0,
     currency: 'USD',
     type: 'diamonds',
@@ -47,7 +57,7 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
     image: '',
     code: ''
   });
-  
+
   // Editing product state
   const [editingProduct, setEditingProduct] = useState<GameProduct | null>(null);
 
@@ -55,117 +65,98 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch MLBB products
-      const { data: mlbbData, error: mlbbError } = await supabase
-        .from('mlbb_products')
-        .select('*')
-        .order('id', { ascending: true });
-      if (mlbbError) throw mlbbError;
+      const [
+        { data: mlbbData, error: mlbbError },
+        { data: ffData, error: ffError },
+        { data: settingsData, error: settingsError },
+        { data: monthlyTxData, error: monthlyTxError },
+        { data: dailyTxData, error: dailyTxError },
+        { count: resellerCountData, error: resellerCountError },
+        { count: userCountData, error: userCountError }
+      ] = await Promise.all([
+        supabase.from('mlbb_products').select('*').order('id', { ascending: true }),
+        supabase.from('freefire_products').select('*').order('id', { ascending: true }),
+        supabase.from('settings').select('value').eq('key', 'logo_banner').single(),
+        supabase.from('transactions').select('created_at').gte('created_at', '2024-01-01'),
+        supabase.from('transactions').select('created_at').gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
+        supabase.from('resellers').select('*', { count: 'exact', head: true }),
+        supabase.from('users').select('*', { count: 'exact', head: true })
+      ]);
 
-      // Fetch Free Fire products
-      const { data: ffData, error: ffError } = await supabase
-        .from('freefire_products')
-        .select('*')
-        .order('id', { ascending: true });
-      if (ffError) throw ffError;
-
-      // Fetch logo banner
-      const { data: settingsData, error: settingsError } = await supabase
-        .from('settings')
-        .select('value')
-        .eq('key', 'logo_banner')
-        .single();
-      if (settingsError && settingsError.code !== 'PGRST116') throw settingsError;
-
-      // Fetch transactions per month
-      const { data: monthlyTxData, error: monthlyTxError } = await supabase
-        .from('transactions')
-        .select('created_at')
-        .gte('created_at', '2024-01-01');
-      if (monthlyTxError) throw monthlyTxError;
-
-      // Fetch transactions per day (last 30 days)
-      const { data: dailyTxData, error: dailyTxError } = await supabase
-        .from('transactions')
-        .select('created_at')
-        .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
-      if (dailyTxError) throw dailyTxError;
-
-      // Fetch reseller count
-      const { count: resellerCountData, error: resellerCountError } = await supabase
-        .from('resellers')
-        .select('*', { count: 'exact', head: true });
-      if (resellerCountError) throw resellerCountError;
-      // Fetch user count
-      const { count: userCountData, error: userCountError } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true });
-      if (userCountError) throw userCountError;
+      if (mlbbError) throw new Error(`Failed to fetch MLBB products: ${mlbbError.message}`);
+      if (ffError) throw new Error(`Failed to fetch Free Fire products: ${ffError.message}`);
+      if (settingsError && settingsError.code !== 'PGRST116') throw new Error(`Failed to fetch settings: ${settingsError.message}`);
+      if (monthlyTxError) throw new Error(`Failed to fetch monthly transactions: ${monthlyTxError.message}`);
+      if (dailyTxError) throw new Error(`Failed to fetch daily transactions: ${dailyTxError.message}`);
+      if (resellerCountError) throw new Error(`Failed to fetch reseller count: ${resellerCountError.message}`);
+      if (userCountError) throw new Error(`Failed to fetch user count: ${userCountError.message}`);
 
       // Transform product data
       const transformedMlbbProducts: GameProduct[] = mlbbData.map(product => ({
         id: product.id,
         name: product.name,
-        diamonds: product.diamonds  undefined,
+        diamonds: product.diamonds,
         price: product.price,
         currency: product.currency,
         type: product.type as 'diamonds' | 'subscription' | 'special',
         game: 'mlbb',
-        image: product.image  undefined,
-        code: product.code  undefined
+        image: product.image,
+        code: product.code
       }));
 
       const transformedFfProducts: GameProduct[] = ffData.map(product => ({
         id: product.id,
         name: product.name,
-        diamonds: product.diamonds  undefined,
+        diamonds: product.diamonds,
         price: product.price,
         currency: product.currency,
         type: product.type as 'diamonds' | 'subscription' | 'special',
         game: 'freefire',
-        image: product.image  undefined
+        image: product.image
       }));
 
       // Transform transaction data
       const monthlyCounts: { [key: string]: number } = {};
-      monthlyTxData.forEach(row => {
-        const date = new Date(row.created_at);
-        const year = date.getFullYear();
-        const month = date.getMonth() + 1; // JavaScript months are 0-based
-        const key = `${year}-${month}`;
-        monthlyCounts[key] = (monthlyCounts[key]  0) + 1;
-      });
-
-      const transformedMonthlyTx: TransactionMetric[] = Object.entries(monthlyCounts).map(([key, count]) => {
-        const [year, month] = key.split('-').map(Number);
-        return { year, month, count };
-      }).sort((a, b) => a.year - b.year  a.month - b.month);
-
       const dailyCounts: { [key: string]: number } = {};
-      dailyTxData.forEach(row => {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+      monthlyTxData.forEach(row => {
         const date = new Date(row.created_at);
         const year = date.getFullYear();
         const month = date.getMonth() + 1;
         const day = date.getDate();
-        const key = `${year}-${month}-${day}`;
-        dailyCounts[key] = (dailyCounts[key]  0) + 1;
+        const monthKey = `${year}-${month}`;
+        const dayKey = `${year}-${month}-${day}`;
+        monthlyCounts[monthKey] = (monthlyCounts[monthKey] || 0) + 1;
+        if (date >= thirtyDaysAgo) {
+          dailyCounts[dayKey] = (dailyCounts[dayKey] || 0) + 1;
+        }
       });
 
-      const transformedDailyTx: TransactionMetric[] = Object.entries(dailyCounts).map(([key, count]) => {
-        const [year, month, day] = key.split('-').map(Number);
-        return { year, month, day, count };
-      }).sort((a, b) => a.year - b.year  a.month - b.month  (a.day! - b.day!));
+      const transformedMonthlyTx: TransactionMetric[] = Object.entries(monthlyCounts)
+        .map(([key, count]) => {
+          const [year, month] = key.split('-').map(Number);
+          return { year, month, count };
+        })
+        .sort((a, b) => a.year - b.year || a.month - b.month);
+
+      const transformedDailyTx: TransactionMetric[] = Object.entries(dailyCounts)
+        .map(([key, count]) => {
+          const [year, month, day] = key.split('-').map(Number);
+          return { year, month, day, count };
+        })
+        .sort((a, b) => a.year - b.year || a.month - b.month || (a.day! - b.day!));
 
       setMlbbProducts(transformedMlbbProducts);
       setFfProducts(transformedFfProducts);
-      setLogoBanner(settingsData?.value  null);
+      setLogoBanner(settingsData?.value || null);
       setTransactionsPerMonth(transformedMonthlyTx);
       setTransactionsPerDay(transformedDailyTx);
-      setResellerCount(resellerCountData  0);
-      setUserCount(userCountData  0);
+      setResellerCount(resellerCountData || 0);
+      setUserCount(userCountData || 0);
     } catch (error) {
       console.error('Error fetching data:', error);
-      alert('Failed to load data. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to load data. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -177,108 +168,99 @@ export function AdminPanel({ onLogout }: AdminPanelProps) {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await fetchData();
-    setRefreshing(false);
+    try {
+      await fetchData();
+      alert('Data refreshed successfully!');
+    } catch {
+      alert('Failed to refresh data. Please try again.');
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   // Validate product form
   const validateForm = (product: Partial<GameProduct>): boolean => {
-    const errors: {[key: string]: string} = {};
-    
+    const errors: { [key: string]: string } = {};
+
     if (!product.name?.trim()) {
       errors.name = 'Name is required';
     }
-    
-    if (product.type === 'diamonds' && !product.diamonds) {
+
+    if (product.type === 'diamonds' && (product.diamonds === undefined || product.diamonds === null)) {
       errors.diamonds = 'Diamonds amount is required for diamond type products';
     }
-    
-    if (product.price === undefined  product.price <= 0) {
+
+    if (product.price === undefined || product.price <= 0) {
       errors.price = 'Price must be greater than 0';
     }
-    
+
     if (!product.currency?.trim()) {
       errors.currency = 'Currency is required';
     }
-    
+
     if (!product.type) {
       errors.type = 'Type is required';
     }
-    
+
     if (!product.image?.trim()) {
       errors.image = 'Image URL is required';
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
-const handleInputChange = (
+
+  const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
-    product: Partial<GameProduct> = newProduct
+    product: Partial<GameProduct> | GameProduct = newProduct
   ) => {
     const { name, value, type } = e.target;
-    
-    setFormErrors(prev => ({ ...prev, [name]: undefined }));
-    
-    if (name === 'price'  name === 'diamonds') {
-      const numValue = type === 'number' ? parseFloat(value) : null;
-      
-      if (product === newProduct) {
-        setNewProduct(prev => ({
-          ...prev,
-          [name]: numValue !== null ? numValue : value
-        }));
-      } else if (editingProduct) {
-        setEditingProduct(prev => ({
-          ...prev!,
-          [name]: numValue !== null ? numValue : value
-        }));
-      }
+    const isEditing = (p: Partial<GameProduct> | GameProduct): p is GameProduct => 'id' in p;
+    const numValue = type === 'number' ? parseFloat(value) || null : value;
+
+    const updatedProduct = {
+      ...product,
+      [name]: name === 'price' || name === 'diamonds' ? numValue : value
+    };
+
+    if (isEditing(product)) {
+      setEditingProduct(updatedProduct as GameProduct);
     } else {
-      if (product === newProduct) {
-        setNewProduct(prev => ({
-          ...prev,
-          [name]: value
-        }));
-      } else if (editingProduct) {
-        setEditingProduct(prev => ({
-          ...prev!,
-          [name]: value
-        }));
-      }
+      setNewProduct(updatedProduct);
     }
+
+    // Validate on change to provide immediate feedback
+    validateForm(updatedProduct);
   };
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm(newProduct)) {
       return;
     }
-    
+
     setLoading(true);
     try {
       const tableName = newProduct.game === 'mlbb' ? 'mlbb_products' : 'freefire_products';
-      
+
       const productData = {
         name: newProduct.name,
-        diamonds: newProduct.diamonds  null,
+        diamonds: newProduct.diamonds || null,
         price: newProduct.price,
         currency: newProduct.currency,
         type: newProduct.type,
-        image: newProduct.image  null,
-        ...(newProduct.game === 'mlbb' && { code: newProduct.code  null })
+        image: newProduct.image || null,
+        ...(newProduct.game === 'mlbb' && { code: newProduct.code || null })
       };
-      
-      const { error } = await supabase
-        .from(tableName)
-        .insert([productData]);
-      
-      if (error) throw error;
-      
+
+      const { error } = await supabase.from(tableName).insert([productData]);
+
+      if (error) throw new Error(`Failed to add product: ${error.message}`);
+
       setNewProduct({
         name: '',
-        diamonds: undefined,
+        diamonds: null,
         price: 0,
         currency: 'USD',
         type: 'diamonds',
@@ -286,14 +268,14 @@ const handleInputChange = (
         image: '',
         code: ''
       });
-      
+
       setShowAddForm(false);
       await fetchData();
-      
+
       alert('Product added successfully!');
     } catch (error) {
       console.error('Error adding product:', error);
-      alert('Failed to add product. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to add product. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -301,37 +283,37 @@ const handleInputChange = (
 
   const handleEditProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!editingProduct  !validateForm(editingProduct)) {
+
+    if (!editingProduct || !validateForm(editingProduct)) {
       return;
     }
-    
+
     setLoading(true);
     try {
       const tableName = editingProduct.game === 'mlbb' ? 'mlbb_products' : 'freefire_products';
-      
+
       const productData = {
         name: editingProduct.name,
-        diamonds: editingProduct.diamonds  null,
+        diamonds: editingProduct.diamonds || null,
         price: editingProduct.price,
         currency: editingProduct.currency,
         type: editingProduct.type,
-        image: editingProduct.image  null,
+        image: editingProduct.image || null,
         updated_at: new Date().toISOString(),
-        ...(editingProduct.game === 'mlbb' && { code: editingProduct.code  null })
+        ...(editingProduct.game === 'mlbb' && { code: editingProduct.code || null })
       };
-      
+
       const { error } = await supabase
         .from(tableName)
         .update(productData)
         .eq('id', editingProduct.id);
-      
-      if (error) throw new Error(Failed to update product: ${error.message});
-      
+
+      if (error) throw new Error(`Failed to update product: ${error.message}`);
+
       setEditingProduct(null);
       setShowEditForm(false);
       await fetchData();
-      
+
       alert('Product updated successfully!');
     } catch (error) {
       console.error('Error updating product:', error);
@@ -340,37 +322,48 @@ const handleInputChange = (
       setLoading(false);
     }
   };
-const handleDeleteProduct = async (product: GameProduct) => {
-    if (!confirm(Are you sure you want to delete ${product.name}?)) {
+
+  const handleDeleteProduct = async (product: GameProduct) => {
+    if (!confirm(`Are you sure you want to delete ${product.name}?`)) {
       return;
     }
-    
+
     setLoading(true);
     try {
       const tableName = product.game === 'mlbb' ? 'mlbb_products' : 'freefire_products';
-      
+
       const { error } = await supabase
         .from(tableName)
         .delete()
         .eq('id', product.id);
-      
-      if (error) throw error;
-      
+
+      if (error) throw new Error(`Failed to delete product: ${error.message}`);
+
       await fetchData();
-      
+
       alert('Product deleted successfully!');
-    } catch (error) {
+    } catch видит error) {
       console.error('Error deleting product:', error);
-      alert('Failed to delete product. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to delete product. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle banner file selection
+  // Handle banner file selection with validation
   const handleBannerFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      const validTypes = ['image/png', 'image/jpeg', 'image/gif'];
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (!validTypes.includes(file.type)) {
+        alert('Please upload a PNG, JPEG, or GIF image.');
+        return;
+      }
+      if (file.size > maxSize) {
+        alert('File size must be less than 5MB.');
+        return;
+      }
       setBannerFile(file);
     }
   };
@@ -378,42 +371,42 @@ const handleDeleteProduct = async (product: GameProduct) => {
   // Handle banner upload
   const handleUploadBanner = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!bannerFile) {
       alert('Please select an image file.');
       return;
     }
-    
+
     setUploadingBanner(true);
     try {
       const fileExt = bannerFile.name.split('.').pop();
-      const fileName = logo_banner_${Date.now()}.${fileExt};
-      const filePath = branding/${fileName};
-      
+      const fileName = `logo_banner_${Date.now()}.${fileExt}`;
+      const filePath = `branding/${fileName}`;
+
       const { error: uploadError } = await supabase.storage
         .from('branding')
         .upload(filePath, bannerFile);
-      
-      if (uploadError) throw uploadError;
-      
+
+      if (uploadError) throw new Error(`Failed to upload banner: ${uploadError.message}`);
+
       const { data: urlData } = supabase.storage
         .from('branding')
         .getPublicUrl(filePath);
-      
+
       if (!urlData?.publicUrl) throw new Error('Failed to get public URL');
-      
+
       const { error: settingsError } = await supabase
         .from('settings')
         .upsert({ key: 'logo_banner', value: urlData.publicUrl }, { onConflict: 'key' });
-      
-      if (settingsError) throw settingsError;
-      
+
+      if (settingsError) throw new Error(`Failed to update settings: ${settingsError.message}`);
+
       setLogoBanner(urlData.publicUrl);
       setBannerFile(null);
       alert('Logo banner updated successfully!');
     } catch (error) {
       console.error('Error uploading banner:', error);
-      alert('Failed to upload banner. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to upload banner. Please try again.');
     } finally {
       setUploadingBanner(false);
     }
@@ -436,16 +429,17 @@ const handleDeleteProduct = async (product: GameProduct) => {
     setFormErrors({});
     setNewProduct({
       name: '',
-      diamonds: undefined,
+      diamonds: null,
       price: 0,
       currency: 'USD',
       type: 'diamonds',
-      game: activeTab === 'resellers'  activeTab === 'prices'  activeTab === 'promos'  activeTab === 'settings'  activeTab === 'dashboard' ? 'mlbb' : activeTab,
+      game: activeTab === 'resellers' || activeTab === 'prices' || activeTab === 'promos' || activeTab === 'settings' || activeTab === 'dashboard' ? 'mlbb' : activeTab,
       image: '',
       code: ''
     });
   };
-return (
+
+  return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
@@ -532,7 +526,7 @@ return (
                 className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
                   activeTab === 'freefire'
                     ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 Hover:text-gray-700 hover:border-gray-300'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                 }`}
               >
                 <ShoppingBag className="w-4 h-4" />
@@ -543,7 +537,8 @@ return (
                   setActiveTab('resellers');
                   setShowAddForm(false);
                   setShowEditForm(false);
-                }}className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
+                }}
+                className={`py-4 px-6 text-center border-b-2 font-medium text-sm flex items-center gap-2 ${
                   activeTab === 'resellers'
                     ? 'border-blue-500 text-blue-600'
                     : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -604,7 +599,7 @@ return (
             {activeTab === 'dashboard' ? (
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold text-gray-900">Dashboard</h2>
-                
+
                 {/* Summary Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
@@ -615,7 +610,9 @@ return (
                     <h3 className="text-lg font-medium text-gray-900">Total Users</h3>
                     <p className="text-2xl font-bold text-blue-600">{userCount}</p>
                   </div>
-                </div>{/* Transactions Per Month */}
+                </div>
+
+                {/* Transactions Per Month */}
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Transactions Per Month</h3>
                   <div className="overflow-x-auto">
@@ -684,9 +681,7 @@ return (
             ) : activeTab === 'resellers' ? (
               <ResellerManager />
             ) : activeTab === 'prices' ? (
-              <ResellerPriceManager mlbbProducts={mlbbProducts}
-                ffProducts={ffProducts}
-              />
+              <ResellerPriceManager mlbbProducts={mlbbProducts} ffProducts={ffProducts} />
             ) : activeTab === 'promos' ? (
               <PromoCodeManager />
             ) : activeTab === 'settings' ? (
@@ -719,7 +714,7 @@ return (
                     <div className="flex justify-end">
                       <button
                         type="submit"
-                        disabled={uploadingBanner  !bannerFile}
+                        disabled={uploadingBanner || !bannerFile}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                       >
                         {uploadingBanner ? (
@@ -768,9 +763,7 @@ return (
                       <div className="bg-gray-50 p-6 rounded-lg mb-6 border border-gray-200">
                         <div className="flex justify-between items-center mb-4">
                           <h3 className="text-lg font-medium text-gray-900">Add New Product</h3>
-                          <button onClick={cancelAdd}
-                            className="text-gray-500 hover:text-gray-700"
-                          >
+                          <button onClick={cancelAdd} className="text-gray-500 hover:text-gray-700">
                             <X className="w-5 h-5" />
                           </button>
                         </div>
@@ -787,9 +780,10 @@ return (
                                 value={newProduct.name}
                                 onChange={(e) => handleInputChange(e)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                aria-describedby={formErrors.name ? "name-error" : undefined}
                               />
                               {formErrors.name && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+                                <p id="name-error" className="text-red-500 text-xs mt-1">{formErrors.name}</p>
                               )}
                             </div>
                             <div>
@@ -802,13 +796,14 @@ return (
                                 value={newProduct.type}
                                 onChange={(e) => handleInputChange(e)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                aria-describedby={formErrors.type ? "type-error" : undefined}
                               >
                                 <option value="diamonds">Diamonds</option>
                                 <option value="subscription">Subscription</option>
                                 <option value="special">Special</option>
                               </select>
                               {formErrors.type && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.type}</p>
+                                <p id="type-error" className="text-red-500 text-xs mt-1">{formErrors.type}</p>
                               )}
                             </div>
                             <div>
@@ -819,12 +814,13 @@ return (
                                 type="number"
                                 id="diamonds"
                                 name="diamonds"
-                                value={newProduct.diamonds  ''}
+                                value={newProduct.diamonds ?? ''}
                                 onChange={(e) => handleInputChange(e)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                aria-describedby={formErrors.diamonds ? "diamonds-error" : undefined}
                               />
                               {formErrors.diamonds && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.diamonds}</p>
+                                <p id="diamonds-error" className="text-red-500 text-xs mt-1">{formErrors.diamonds}</p>
                               )}
                             </div>
                             <div>
@@ -836,11 +832,13 @@ return (
                                 id="price"
                                 name="price"
                                 step="0.01"
-                                value={newProduct.price  ''}
-                                onChange={(e) => handleInputChange(e)}className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                value={newProduct.price ?? ''}
+                                onChange={(e) => handleInputChange(e)}
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                aria-describedby={formErrors.price ? "price-error" : undefined}
                               />
                               {formErrors.price && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.price}</p>
+                                <p id="price-error" className="text-red-500 text-xs mt-1">{formErrors.price}</p>
                               )}
                             </div>
                             <div>
@@ -854,9 +852,10 @@ return (
                                 value={newProduct.currency}
                                 onChange={(e) => handleInputChange(e)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                aria-describedby={formErrors.currency ? "currency-error" : undefined}
                               />
                               {formErrors.currency && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.currency}</p>
+                                <p id="currency-error" className="text-red-500 text-xs mt-1">{formErrors.currency}</p>
                               )}
                             </div>
                             <div>
@@ -867,12 +866,13 @@ return (
                                 type="text"
                                 id="image"
                                 name="image"
-                                value={newProduct.image  ''}
+                                value={newProduct.image ?? ''}
                                 onChange={(e) => handleInputChange(e)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                aria-describedby={formErrors.image ? "image-error" : undefined}
                               />
                               {formErrors.image && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.image}</p>
+                                <p id="image-error" className="text-red-500 text-xs mt-1">{formErrors.image}</p>
                               )}
                             </div>
                             {activeTab === 'mlbb' && (
@@ -884,7 +884,7 @@ return (
                                   type="text"
                                   id="code"
                                   name="code"
-                                  value={newProduct.code  ''}
+                                  value={newProduct.code ?? ''}
                                   onChange={(e) => handleInputChange(e)}
                                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                                 />
@@ -901,7 +901,8 @@ return (
                             </button>
                             <button
                               type="submit"
-                              disabled={loading}className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                              disabled={loading}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                             >
                               {loading ? (
                                 <>
@@ -924,10 +925,7 @@ return (
                       <div className="bg-gray-50 p-6 rounded-lg mb-6 border border-gray-200">
                         <div className="flex justify-between items-center mb-4">
                           <h3 className="text-lg font-medium text-gray-900">Edit Product</h3>
-                          <button
-                            onClick={cancelEdit}
-                            className="text-gray-500 hover:text-gray-700"
-                          >
+                          <button onClick={cancelEdit} className="text-gray-500 hover:text-gray-700">
                             <X className="w-5 h-5" />
                           </button>
                         </div>
@@ -944,9 +942,10 @@ return (
                                 value={editingProduct.name}
                                 onChange={(e) => handleInputChange(e, editingProduct)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                aria-describedby={formErrors.name ? "edit-name-error" : undefined}
                               />
                               {formErrors.name && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.name}</p>
+                                <p id="edit-name-error" className="text-red-500 text-xs mt-1">{formErrors.name}</p>
                               )}
                             </div>
                             <div>
@@ -957,15 +956,16 @@ return (
                                 id="edit-type"
                                 name="type"
                                 value={editingProduct.type}
-                           onChange={(e) => handleInputChange(e, editingProduct)}
+                                onChange={(e) => handleInputChange(e, editingProduct)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                aria-describedby={formErrors.type ? "edit-type-error" : undefined}
                               >
                                 <option value="diamonds">Diamonds</option>
                                 <option value="subscription">Subscription</option>
                                 <option value="special">Special</option>
                               </select>
                               {formErrors.type && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.type}</p>
+                                <p id="edit-type-error" className="text-red-500 text-xs mt-1">{formErrors.type}</p>
                               )}
                             </div>
                             <div>
@@ -976,12 +976,13 @@ return (
                                 type="number"
                                 id="edit-diamonds"
                                 name="diamonds"
-                                value={editingProduct.diamonds  ''}
+                                value={editingProduct.diamonds ?? ''}
                                 onChange={(e) => handleInputChange(e, editingProduct)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                aria-describedby={formErrors.diamonds ? "edit-diamonds-error" : undefined}
                               />
                               {formErrors.diamonds && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.diamonds}</p>
+                                <p id="edit-diamonds-error" className="text-red-500 text-xs mt-1">{formErrors.diamonds}</p>
                               )}
                             </div>
                             <div>
@@ -993,12 +994,13 @@ return (
                                 id="edit-price"
                                 name="price"
                                 step="0.01"
-                                value={editingProduct.price  ''}
+                                value={editingProduct.price ?? ''}
                                 onChange={(e) => handleInputChange(e, editingProduct)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                aria-describedby={formErrors.price ? "edit-price-error" : undefined}
                               />
                               {formErrors.price && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.price}</p>
+                                <p id="edit-price-error" className="text-red-500 text-xs mt-1">{formErrors.price}</p>
                               )}
                             </div>
                             <div>
@@ -1012,24 +1014,27 @@ return (
                                 value={editingProduct.currency}
                                 onChange={(e) => handleInputChange(e, editingProduct)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                aria-describedby={formErrors.currency ? "edit-currency-error" : undefined}
                               />
                               {formErrors.currency && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.currency}</p>
+                                <p id="edit-currency-error" className="text-red-500 text-xs mt-1">{formErrors.currency}</p>
                               )}
                             </div>
                             <div>
                               <label htmlFor="edit-image" className="block text-sm font-medium text-gray-700 mb-1">
                                 Image URL
                               </label>
-                              <input type="text"
+                              <input
+                                type="text"
                                 id="edit-image"
                                 name="image"
-                                value={editingProduct.image  ''}
+                                value={editingProduct.image ?? ''}
                                 onChange={(e) => handleInputChange(e, editingProduct)}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                                aria-describedby={formErrors.image ? "edit-image-error" : undefined}
                               />
                               {formErrors.image && (
-                                <p className="text-red-500 text-xs mt-1">{formErrors.image}</p>
+                                <p id="edit-image-error" className="text-red-500 text-xs mt-1">{formErrors.image}</p>
                               )}
                             </div>
                             {editingProduct.game === 'mlbb' && (
@@ -1041,7 +1046,7 @@ return (
                                   type="text"
                                   id="edit-code"
                                   name="code"
-                                  value={editingProduct.code  ''}
+                                  value={editingProduct.code ?? ''}
                                   onChange={(e) => handleInputChange(e, editingProduct)}
                                   className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
                                 />
@@ -1076,7 +1081,9 @@ return (
                           </div>
                         </form>
                       </div>
-                    )}<div className="overflow-x-auto">
+                    )}
+
+                    <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
@@ -1126,17 +1133,20 @@ return (
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${product.type === 'diamonds'
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : product.type === 'subscription'
-                                    ? 'bg-green-100 text-green-800'
-                                    : 'bg-purple-100 text-purple-800'
-                                }`}>
+                                <span
+                                  className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                                    product.type === 'diamonds'
+                                      ? 'bg-blue-100 text-blue-800'
+                                      : product.type === 'subscription'
+                                      ? 'bg-green-100 text-green-800'
+                                      : 'bg-purple-100 text-purple-800'
+                                  }`}
+                                >
                                   {product.type}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {product.diamonds  '-'}
+                                {product.diamonds ?? '-'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                 {product.currency} {product.price.toFixed(2)}
