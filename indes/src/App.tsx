@@ -418,85 +418,105 @@ const handleSubmit = (e: React.FormEvent) => {
                 </div>
 
                 {/* Form section */}
-<form onSubmit={handleSubmit} className="space-y-4">
-  <div className={`grid ${form.game === 'mlbb' ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-4`}>
-    {/* User ID */}
-    <div>
-      <label className="block text-sm font-medium mb-1 text-gray-300">
-        {form.game === 'mlbb' ? 'User ID' : 'Free Fire ID'}
-      </label>
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-        <input
-          type="number"
-          value={form.userId}
-          onChange={(e) => {
-            setForm(prev => ({ ...prev, userId: e.target.value, nickname: undefined }));
-            setValidationResult(null);
-            setFormErrors(prev => ({ ...prev, userId: undefined }));
-          }}
-          className="pl-9 w-full rounded-lg bg-black/50 border border-gray-700 px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 text-sm"
-          placeholder={`Enter your ${form.game === 'mlbb' ? 'User ID' : 'Free Fire ID'}`}
-        />
-        {formErrors.userId && <p className="text-red-400 text-xs mt-1">{formErrors.userId}</p>}
-      </div>
+                  <form onSubmit={handleSubmit} className="space-y-6 dangrek">
+                      <div className={`grid ${form.game === 'mlbb' || form.game === 'mlbb_ph' ? 'md:grid-cols-2' : 'md:grid-cols-1'} gap-4`}>
+                        <div>
+                          <label className="block text-sm font-medium text-white mb-1">
+                            {form.game === 'mlbb' ? 'User ID' : form.game === 'mlbb_ph' ? 'User ID (PH)' : 'Free Fire ID'}
+                          </label>
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                            <input
+                              type="number"
+                              value={form.userId}
+                              onChange={(e) => {
+                                setForm((prev) => ({ ...prev, userId: e.target.value, nickname: undefined }));
+                                setValidationResult(null);
+                                setFormErrors((prev) => ({ ...prev, userId: undefined }));
+                              }}
+                              className="w-full pl-10 pr-3 py-3 rounded-lg bg-white/5 border border-white/20 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 text-sm dangrek"
+                              placeholder={`Enter your ${form.game === 'mlbb' ? 'User ID' : form.game === 'mlbb_ph' ? 'User ID (PH)' : 'Free Fire ID'}`}
+                            />
+                            {formErrors.userId && (
+                              <p className="text-red-400 text-xs mt-1 dangrek">{formErrors.userId}</p>
+                            )}
+                          </div>
+                        </div>
+                        {(form.game === 'mlbb' || form.game === 'mlbb_ph') && (
+                          <div>
+                            <label className="block text-sm font-medium text-white mb-1">Server ID</label>
+                            <div className="relative">
+                              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                              <input
+                                type="number"
+                                value={form.serverId}
+                                onChange={(e) => {
+                                  setForm((prev) => ({ ...prev, serverId: e.target.value, nickname: undefined }));
+                                  setValidationResult(null);
+                                  setFormErrors((prev) => ({ ...prev, serverId: undefined }));
+                                }}
+                                className="w-full pl-10 pr-3 py-3 rounded-lg bg-white/5 border border-white/20 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300 text-white placeholder-gray-400 text-sm dangrek"
+                                placeholder="Enter your Server ID"
+                              />
+                              {formErrors.serverId && (
+                                <p className="text-red-400 text-xs mt-1 dangrek">{formErrors.serverId}</p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+<div className="space-y-2">
+  <div className="flex items-center gap-2">
+    <button
+      type="button"
+      onClick={validateAccount}
+      disabled={
+        !form.userId ||
+        validating ||
+        (form.game === 'mlbb' && !form.serverId) ||
+        (form.game === 'mlbb_ph' && !form.serverId)
+      }
+      className="w-full bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm justify-center dangrek text-white font-medium shadow-md"
+    >
+      {validating ? (
+        <>
+          <Loader2 className="w-4 h-4 animate-spin" />
+          Checking...
+        </>
+      ) : (
+        <>
+          <Search className="w-4 h-4" />
+          Check ID
+        </>
+      )}
+    </button>
+  </div>
+  {validationResult && 'status' in validationResult && validationResult.status === 'success' && (
+    <div className="flex items-center gap-2 text-green-400 text-sm dangrek">
+      <CheckCircle2 className="w-4 h-4" />
+      <span>Account found: {validationResult.data?.userName}</span>
     </div>
-
-    {/* Server ID */}
-    {form.game === 'mlbb' && (
-      <div>
-        <label className="block text-sm font-medium mb-1 text-gray-300">Server ID</label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="number"
-            value={form.serverId}
-            onChange={(e) => {
-              setForm(prev => ({ ...prev, serverId: e.target.value, nickname: undefined }));
-              setValidationResult(null);
-              setFormErrors(prev => ({ ...prev, serverId: undefined }));
-            }}
-            className="pl-9 w-full rounded-lg bg-black/50 border border-gray-700 px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 text-sm"
-            placeholder="Enter your Server ID"
-          />
-          {formErrors.serverId && <p className="text-red-400 text-xs mt-1">{formErrors.serverId}</p>}
-        </div>
-      </div>
-    )}
-
-    {/* Validate Account Button */}
-    {form.game === 'mlbb' && (
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onClick={validateAccount}
-          disabled={!form.userId || !form.serverId || validating}
-          className="w-full bg-sky-500 text-white px-4 py-2 rounded-lg hover:bg-sky-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm justify-center"
-        >
-          {validating ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Checking...
-            </>
-          ) : (
-            <>
-              <Search className="w-4 h-4" />
-              Check ID
-            </>
-          )}
-        </button>
-        {validationResult?.success && (
-          <div className="flex items-center gap-2 text-green-400 text-sm">
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Account found: {form.nickname}</span>
-          </div>
-        )}
-        {validationResult && !validationResult.success && (
-          <p className="text-red-400 text-xs mt-1">Invalid account details</p>
-        )}
-      </div>
-    )}
-
+  )}
+  {validationResult && 'status' in validationResult && validationResult.status === 'invalid' && (
+    <div className="flex items-center gap-2 text-red-400 text-sm dangrek">
+      <XCircle className="w-4 h-4" />
+      <span>{validationResult.message || 'Invalid user ID or server ID'}</span>
+    </div>
+  )}
+  {validationResult && 'error' in validationResult && !validationResult.error && (
+    <div className="flex items-center gap-2 text-green-400 text-sm dangrek">
+      <CheckCircle2 className="w-4 h-4" />
+      <span>Account found</span>
+    </div>
+  )}
+  {validationResult && 'error' in validationResult && validationResult.error && (
+    <div className="flex items-center gap-2 text-red-400 text-sm dangrek">
+      <XCircle className="w-4 h-4" />
+      <span>{validationResult.message || 'Invalid Free Fire ID'}</span>
+    </div>
+  )}
+</div>
     {/* Select Package */}
     <div>
       <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
