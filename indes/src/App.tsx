@@ -119,7 +119,7 @@ function App() {
       let error;
       const isReseller = localStorage.getItem('genzstore_reseller_auth') === 'true';
       if (game === 'mlbb') {
-        const response = await supabase.from('mlbb_products').select('*基本的に, { ascending: true });
+        const response = await supabase.from('mlbb_products').select('*').order('id', { ascending: true });
         data = response.data;
         error = response.error;
       } else {
