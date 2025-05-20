@@ -61,7 +61,7 @@ function App() {
       const path = window.location.pathname;
       setIsAdminRoute(path === '/adminlogintopup');
       setIsResellerRoute(path === '/reseller');
-      const resellerAuth = localStorage.getItem('jackstore_reseller_auth');
+      const resellerAuth = localStorage.getItem('genzstore_reseller_auth');
       setIsResellerLoggedIn(resellerAuth === 'true');
     };
     checkRoute();
@@ -451,47 +451,49 @@ function App() {
                     )}
                   </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={validateAccount}
-                        disabled={
-                          !form.userId ||
-                          validating ||
-                          (form.game === 'mlbb' && !form.serverId)
-                        }
-                        className="w-full bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm justify-center dangrek text-white font-medium shadow-md"
-                      >
-                        {validating ? (
-                          <>
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            Checking...
-                          </>
-                        ) : (
-                          <>
-                            <Search className="w-4 h-4" />
-                            Check ID
-                          </>
-                        )}
-                      </button>
-                    </div>
-                    {validationResult && (
-                      <div className={`flex items-center gap-2 text-sm dangrek ${validationResult.success ? 'text-green-400' : 'text-red-400'}`}>
-                        {validationResult.success ? (
-                          <>
-                            <CheckCircle2 className="w-4 h-4" />
-                            <span>Account found: {validationResult.name}</span>
-                          </>
-                        ) : (
-                          <>
-                            <XCircle className="w-4 h-4" />
-                            <span>Invalid user ID or server ID</span>
-                          </>
-                        )}
+                  {form.game === 'mlbb' && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={validateAccount}
+                          disabled={
+                            !form.userId ||
+                            validating ||
+                            !form.serverId
+                          }
+                          className="w-full bg-gradient-to-r from-green-500 to-green-600 px-4 py-3 rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm justify-center dangrek text-white font-medium shadow-md"
+                        >
+                          {validating ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Checking...
+                            </>
+                          ) : (
+                            <>
+                              <Search className="w-4 h-4" />
+                              Check ID
+                            </>
+                          )}
+                        </button>
                       </div>
-                    )}
-                  </div>
+                      {validationResult && (
+                        <div className={`flex items-center gap-2 text-sm dangrek ${validationResult.success ? 'text-green-400' : 'text-red-400'}`}>
+                          {validationResult.success ? (
+                            <>
+                              <CheckCircle2 className="w-4 h-4" />
+                              <span>Account found: {validationResult.name}</span>
+                            </>
+                          ) : (
+                            <>
+                              <XCircle className="w-4 h-4" />
+                              <span>Invalid user ID or server ID</span>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
 
                   {/* Select Package */}
                   <div>
@@ -545,7 +547,7 @@ function App() {
                   <button
                     type="submit"
                     onClick={handleSubmit}
-                    disabled={form.game === 'mlbb' && !validationResult?.success || !form.product || paymentCooldown > 0}
+                    disabled={(form.game === 'mlbb' && !validationResult?.success) || !form.product || paymentCooldown > 0}
                     className="w-full bg-gradient-to-r from-black to-gray-800 text-white py-3 px-6 rounded-lg hover:from-gray-900 hover:to-black transition-all duration-300 text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:from-black disabled:hover:to-gray-800 hover:shadow-lg hover:shadow-black/20 transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
                   >
                     {paymentCooldown > 0 ? (
